@@ -18,7 +18,7 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
-// 2. Configuración de Multer para nombres limpios
+// 2. Configuración de Multer
 const storage = multer.diskStorage({
   destination: "uploads/",
   filename: (req, file, cb) => {
@@ -31,7 +31,7 @@ const upload = multer({ storage });
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/", (req, res) => {
-  res.send("Backend Spleeter Activo. Documentación en /api-docs");
+  res.send("Backend Spleeter MP3 Activo. Documentación en /api-docs");
 });
 
 // 4. Ruta principal de procesamiento
@@ -46,10 +46,8 @@ app.post("/separate", upload.single("audio"), (req, res) => {
   const inputPath = path.resolve(__dirname, "uploads", fileName);
   const outputDir = path.resolve(__dirname, "outputs");
 
-  console.log(`\n--- [NUEVA PETICIÓN: ${fileName}] ---`);
+  console.log(`\n--- [NUEVA PETICIÓN MP3: ${fileName}] ---`);
 
-  // CONFIGURACIÓN DE ENTORNO REFORZADA
-  // TF_CPP_MIN_LOG_LEVEL: 2 silencia advertencias de optimización de CPU que causan crashes
   const env = { 
     ...process.env, 
     PATH: `${venvPath};${process.env.PATH}`,
@@ -57,21 +55,28 @@ app.post("/separate", upload.single("audio"), (req, res) => {
     PYTHONIOENCODING: "utf-8"
   };
 
-  const args = ["-m", "spleeter", "separate", "-p", "spleeter:2stems", "-o", outputDir, inputPath];
+  /**
+   * CAMBIO CLAVE: 
+   * -c mp3: Especifica el códec de salida.
+   * -b 192k: Define el bitrate (calidad).
+   */
+  const args = [
+    "-m", "spleeter", 
+    "separate", 
+    "-p", "spleeter:2stems", 
+    "-o", outputDir, 
+    "-c", "mp3", 
+    "-b", "192k", 
+    inputPath
+  ];
 
-  // Usamos spawn para manejar el flujo de datos sin bloqueos
   const spleeterProcess = spawn(pythonExe, args, { env });
 
   let logOutput = "";
 
-  spleeterProcess.stdout.on("data", (data) => {
-    console.log(`[Python Stdout]: ${data}`);
-  });
-
   spleeterProcess.stderr.on("data", (data) => {
     const msg = data.toString();
     logOutput += msg;
-    // Imprimimos en consola para ver el progreso real (Downloading models, etc)
     process.stdout.write(`[Spleeter]: ${msg}`);
   });
 
@@ -79,50 +84,44 @@ app.post("/separate", upload.single("audio"), (req, res) => {
     if (code !== 0) {
       console.error(`\n❌ Spleeter falló con código ${code}`);
       if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-      
-      return res.status(500).json({ 
-        error: "Error en el motor de separación", 
-        code: code,
-        details: logOutput 
-      });
+      return res.status(500).json({ error: "Spleeter falló", details: logOutput });
     }
 
-    console.log("\n⏳ Generando archivos finales...");
+    console.log("\n⏳ Verificando archivos MP3...");
     
-    // Polling de verificación (3 minutos de espera máx)
     const finalFolder = path.join(outputDir, folderName);
     let attempts = 0;
+    
+    // Polling buscando archivos .mp3
     const interval = setInterval(() => {
       attempts++;
-      const vocalPath = path.join(finalFolder, "vocals.wav");
+      const vocalPath = path.join(finalFolder, "vocals.mp3");
       
       if (fs.existsSync(vocalPath)) {
         clearInterval(interval);
         if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-        console.log(`✅ PROCESO EXITOSO: ${folderName}`);
+        console.log(`✅ ÉXITO MP3: ${folderName}`);
         return res.json({
-          message: "Separación exitosa",
+          message: "Separación exitosa (MP3)",
           folder: folderName,
-          vocals: `/outputs/${folderName}/vocals.wav`,
-          accompaniment: `/outputs/${folderName}/accompaniment.wav`
+          vocals: `/outputs/${folderName}/vocals.mp3`,
+          accompaniment: `/outputs/${folderName}/accompaniment.mp3`
         });
       }
 
       if (attempts >= 180) {
         clearInterval(interval);
         if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-        res.status(500).json({ error: "Spleeter terminó pero los archivos no se guardaron." });
+        res.status(500).json({ error: "Los archivos MP3 no se generaron a tiempo." });
       }
     }, 1000);
   });
 });
 
-// 5. Servidor de estáticos
 app.use("/outputs", express.static(path.join(__dirname, "outputs")));
 
 app.listen(PORT, () => {
   console.log(`=========================================================`);
-  console.log(`🚀 Servidor en http://localhost:${PORT}`);
-  console.log(`📝 Swagger en http://localhost:${PORT}/api-docs`);
+  console.log(`🚀 Servidor MP3 en http://localhost:${PORT}`);
   console.log(`=========================================================`);
 });
