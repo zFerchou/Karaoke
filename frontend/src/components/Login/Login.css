@@ -5,7 +5,6 @@
   justify-content: center;
   align-items: center;
   height: 100vh; /* Ocupa toda la altura de la pantalla */
-  background-color: #f0f2f5; /* Color de fondo suave */
 }
 
 .login-card {
