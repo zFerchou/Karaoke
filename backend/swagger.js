@@ -1,55 +1,43 @@
 const swaggerJSDoc = require("swagger-jsdoc");
+const path = require("path");
 
 const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "API Spleeter Backend",
+      title: "API Karaoke Pro",
       version: "1.0.0",
-      description: "Backend en Node.js para separar voz y música usando Spleeter",
+      description: "Backend modular para procesamiento de audio",
     },
-    servers: [
-      {
-        url: "http://localhost:3000",
-        description: "Servidor local",
-      },
-    ],
-    // Definimos la ruta aquí para evitar errores de parseo en index.js
+    servers: [{ url: "http://localhost:3000" }],
     paths: {
-      "/separate": {
+      "/api/spleeter/separate": {
         post: {
-          summary: "Separar voz y acompañamiento",
+          summary: "Separar audio en Voces y Acompañamiento",
+          tags: ["Spleeter"],
           requestBody: {
-            required: true,
             content: {
               "multipart/form-data": {
                 schema: {
                   type: "object",
                   properties: {
-                    audio: {
-                      type: "string",
-                      format: "binary",
-                    },
-                  },
-                },
-              },
-            },
+                    audio: { type: "string", format: "binary" }
+                  }
+                }
+              }
+            }
           },
           responses: {
-            200: {
-              description: "Separación completada con éxito",
-            },
-            500: {
-              description: "Error en el procesamiento",
-            },
-          },
-        },
-      },
-    },
+            200: { description: "Archivos MP3 generados" },
+            500: { description: "Error en el servidor" }
+          }
+        }
+      }
+    }
   },
-  apis: [], // Ya no necesitamos escanear index.js porque definimos el path arriba
+  // Dejamos apis vacío o comentamos para que no intente parsear los comentarios que dan error
+  apis: [], 
 };
 
 const swaggerSpec = swaggerJSDoc(options);
-
 module.exports = swaggerSpec;
