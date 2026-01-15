@@ -1,49 +1,46 @@
 const swaggerJSDoc = require("swagger-jsdoc");
+const path = require("path");
 
 const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "API Karaoke Backend",
+      title: "API Karaoke Pro",
       version: "1.0.0",
-      description: "Backend en Node.js para Spleeter y Gestión de Usuarios",
+      description: "Backend modular para procesamiento con Spleeter y Gestión de Usuarios",
     },
     servers: [
       {
         url: "http://localhost:3000",
-        description: "Servidor local",
+        description: "Servidor Local",
       },
     ],
     paths: {
-      // --- RUTA SPLEETER (AUDIO) ---
-      "/separate": {
+      // --- RUTA SPLEETER (Actualizada a la ruta modular de Fernando) ---
+      "/api/spleeter/separate": {
         post: {
-          summary: "Separar voz y acompañamiento",
-          tags: ["Audio"],
+          summary: "Separar audio en Voces y Acompañamiento",
+          tags: ["Spleeter"],
           requestBody: {
-            required: true,
             content: {
               "multipart/form-data": {
                 schema: {
                   type: "object",
                   properties: {
-                    audio: {
-                      type: "string",
-                      format: "binary",
-                    },
+                    audio: { type: "string", format: "binary" },
                   },
                 },
               },
             },
           },
           responses: {
-            200: { description: "Separación completada con éxito" },
-            500: { description: "Error en el procesamiento" },
+            200: { description: "Separación completada con éxito. Archivos MP3 generados." },
+            500: { description: "Error en el procesamiento del audio." },
           },
         },
       },
 
-      // --- RUTAS DE USUARIOS ---
+      // --- RUTAS DE USUARIOS (Conservadas de tu rama HEAD) ---
       "/usuarios": {
         get: {
           summary: "Obtener lista de todos los usuarios",
@@ -61,14 +58,14 @@ const options = {
                         id: { type: "integer" },
                         nombre: { type: "string" },
                         correo: { type: "string" },
-                        rol: { type: "string" }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+                        rol: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
         post: {
           summary: "Registrar un nuevo usuario",
@@ -85,24 +82,24 @@ const options = {
                     apellidos: { type: "string" },
                     correo: { type: "string" },
                     contrasena: { type: "string" },
-                    rol: { type: "string" }
+                    rol: { type: "string" },
                   },
                   example: {
                     nombre: "Kevin",
                     apellidos: "Gomez",
                     correo: "kevin@test.com",
                     contrasena: "123456",
-                    rol: "usuario"
-                  }
+                    rol: "usuario",
+                  },
                 },
               },
             },
           },
           responses: {
             200: { description: "Usuario registrado exitosamente" },
-            500: { description: "Error al registrar usuario" }
-          }
-        }
+            500: { description: "Error al registrar usuario" },
+          },
+        },
       },
 
       // --- RUTA DE INICIO DE SESIÓN (LOGIN) ---
@@ -120,14 +117,14 @@ const options = {
                   required: ["correo", "contrasena"],
                   properties: {
                     correo: { type: "string", example: "kevin@test.com" },
-                    contrasena: { type: "string", example: "123456" }
-                  }
-                }
-              }
-            }
+                    contrasena: { type: "string", example: "123456" },
+                  },
+                },
+              },
+            },
           },
           responses: {
-            200: { 
+            200: {
               description: "Login exitoso",
               content: {
                 "application/json": {
@@ -135,22 +132,22 @@ const options = {
                     type: "object",
                     properties: {
                       mensaje: { type: "string" },
-                      usuario: { type: "object" }
-                    }
-                  }
-                }
-              }
+                      usuario: { type: "object" },
+                    },
+                  },
+                },
+              },
             },
-            401: { description: "Credenciales incorrectas (Contraseña o correo mal)" },
-            404: { description: "Usuario no encontrado" }
-          }
-        }
-      }
+            401: { description: "Credenciales incorrectas" },
+            404: { description: "Usuario no encontrado" },
+          },
+        },
+      },
     },
   },
-  apis: [], 
+  // Dejamos esto vacío ya que definimos las rutas manualmente arriba
+  apis: [],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
-
 module.exports = swaggerSpec;
