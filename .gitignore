@@ -1,0 +1,33 @@
+# --- Reglas Específicas para Backend ---
+backend/node_modules/
+backend/venv/
+backend/uploads/
+backend/outputs/
+
+# --- Dependencias y Entornos (Global) ---
+node_modules/
+venv/
+.venv/
+env/
+__pycache__/
+
+# --- Python / Spleeter ---
+*.py[cod]
+pretrained_models/
+
+# --- Archivos de Audio / Temporales ---
+**/uploads/*
+**/outputs/*
+!**/uploads/.gitkeep
+!**/outputs/.gitkeep
+
+# --- Binarios y Sistema ---
+ffmpeg.exe
+ffprobe.exe
+ffplay.exe
+.DS_Store
+Thumbs.db
+
+# --- Logs y Configuración ---
+npm-debug.log*
+.env
