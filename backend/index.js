@@ -1,94 +1,128 @@
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
-const { exec } = require("child_process");
+const { spawn } = require("child_process");
 const path = require("path");
 const fs = require("fs");
-
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./swagger");
 
 const app = express();
 const PORT = 3000;
 
-// 1. Crear carpetas necesarias al iniciar el servidor
-const dirs = ["uploads", "outputs"];
-dirs.forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
-  }
+// 1. Crear directorios base
+["uploads", "outputs"].forEach(dir => {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir);
 });
 
 app.use(cors());
 app.use(express.json());
 
-// 2. Configuración de Multer (CORREGIDA: Limpieza de caracteres especiales)
+// 2. Configuración de Multer para nombres limpios
 const storage = multer.diskStorage({
   destination: "uploads/",
   filename: (req, file, cb) => {
-    // Esta expresión regular quita TODO lo que no sea letras, números o puntos.
-    // Evita que símbolos como &, (, ), ' rompan el comando de Windows.
-    const safeName = file.originalname.replace(/[^a-z0-9.]/gi, "_");
-    cb(null, Date.now() + "-" + safeName);
+    cb(null, `${Date.now()}${path.extname(file.originalname)}`);
   },
 });
-
 const upload = multer({ storage });
 
 // 3. Documentación Swagger
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/", (req, res) => {
-  res.send("Backend Spleeter funcionando con Python 3.9");
+  res.send("Backend Spleeter Activo. Documentación en /api-docs");
 });
 
-// 4. Ruta principal para separar audio
+// 4. Ruta principal de procesamiento
 app.post("/separate", upload.single("audio"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No se envió ningún archivo" });
-  }
+  if (!req.file) return res.status(400).json({ error: "No se envió audio" });
 
-  const inputPath = path.resolve(req.file.path);
-  const outputDir = path.resolve(__dirname, "outputs");
+  const fileName = req.file.filename;
+  const folderName = path.parse(fileName).name;
   
-  // Ruta al venv (Ya que lo tienes dentro de backend)
-  const spleeterExe = path.join(__dirname, "venv", "Scripts", "spleeter.exe");
+  const venvPath = path.resolve(__dirname, "venv", "Scripts");
+  const pythonExe = path.join(venvPath, "python.exe");
+  const inputPath = path.resolve(__dirname, "uploads", fileName);
+  const outputDir = path.resolve(__dirname, "outputs");
 
-  // Comando de Spleeter: Usamos comillas dobles por seguridad
-  const command = `"${spleeterExe}" separate -p spleeter:2stems -o "${outputDir}" "${inputPath}"`;
+  console.log(`\n--- [NUEVA PETICIÓN: ${fileName}] ---`);
 
-  console.log(`--- Iniciando procesamiento ---`);
-  console.log(`Archivo original: ${req.file.originalname}`);
-  console.log(`Ejecutando: ${command}`);
+  // CONFIGURACIÓN DE ENTORNO REFORZADA
+  // TF_CPP_MIN_LOG_LEVEL: 2 silencia advertencias de optimización de CPU que causan crashes
+  const env = { 
+    ...process.env, 
+    PATH: `${venvPath};${process.env.PATH}`,
+    TF_CPP_MIN_LOG_LEVEL: "2",
+    PYTHONIOENCODING: "utf-8"
+  };
 
-  // Aumentamos el maxBuffer por si Spleeter arroja muchos logs
-  exec(command, { maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error de ejecución: ${error.message}`);
+  const args = ["-m", "spleeter", "separate", "-p", "spleeter:2stems", "-o", outputDir, inputPath];
+
+  // Usamos spawn para manejar el flujo de datos sin bloqueos
+  const spleeterProcess = spawn(pythonExe, args, { env });
+
+  let logOutput = "";
+
+  spleeterProcess.stdout.on("data", (data) => {
+    console.log(`[Python Stdout]: ${data}`);
+  });
+
+  spleeterProcess.stderr.on("data", (data) => {
+    const msg = data.toString();
+    logOutput += msg;
+    // Imprimimos en consola para ver el progreso real (Downloading models, etc)
+    process.stdout.write(`[Spleeter]: ${msg}`);
+  });
+
+  spleeterProcess.on("close", (code) => {
+    if (code !== 0) {
+      console.error(`\n❌ Spleeter falló con código ${code}`);
+      if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+      
       return res.status(500).json({ 
-        error: "Error procesando el audio", 
-        details: stderr || error.message 
+        error: "Error en el motor de separación", 
+        code: code,
+        details: logOutput 
       });
     }
 
-    const fileNameWithoutExt = path.parse(req.file.filename).name;
+    console.log("\n⏳ Generando archivos finales...");
     
-    console.log(`Procesamiento completado para: ${fileNameWithoutExt}`);
+    // Polling de verificación (3 minutos de espera máx)
+    const finalFolder = path.join(outputDir, folderName);
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      const vocalPath = path.join(finalFolder, "vocals.wav");
+      
+      if (fs.existsSync(vocalPath)) {
+        clearInterval(interval);
+        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+        console.log(`✅ PROCESO EXITOSO: ${folderName}`);
+        return res.json({
+          message: "Separación exitosa",
+          folder: folderName,
+          vocals: `/outputs/${folderName}/vocals.wav`,
+          accompaniment: `/outputs/${folderName}/accompaniment.wav`
+        });
+      }
 
-    res.json({
-      message: "Separación completada",
-      vocals: `/outputs/${fileNameWithoutExt}/vocals.wav`,
-      accompaniment: `/outputs/${fileNameWithoutExt}/accompaniment.wav`,
-    });
+      if (attempts >= 180) {
+        clearInterval(interval);
+        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+        res.status(500).json({ error: "Spleeter terminó pero los archivos no se guardaron." });
+      }
+    }, 1000);
   });
 });
 
+// 5. Servidor de estáticos
 app.use("/outputs", express.static(path.join(__dirname, "outputs")));
 
 app.listen(PORT, () => {
   console.log(`=========================================================`);
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`📝 Swagger disponible en http://localhost:${PORT}/api-docs`);
-  console.log(`🐍 Usando Python 3.9 desde venv`);
+  console.log(`🚀 Servidor en http://localhost:${PORT}`);
+  console.log(`📝 Swagger en http://localhost:${PORT}/api-docs`);
   console.log(`=========================================================`);
 });
