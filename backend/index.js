@@ -41,8 +41,12 @@ app.post("/separate", upload.single("audio"), (req, res) => {
   const fileName = req.file.filename;
   const folderName = path.parse(fileName).name;
   
-  const venvPath = path.resolve(__dirname, "venv", "Scripts");
-  const pythonExe = path.join(venvPath, "python.exe");
+/*   const venvPath = path.resolve(__dirname, "venv", "Scripts");
+  const pythonExe = path.join(venvPath, "python.exe"); */
+
+  const isWin = process.platform === "win32";
+  const venvPath = path.resolve(__dirname, "venv", isWin ? "Scripts" : "bin");
+  const pythonExe = path.join(venvPath, isWin ? "python.exe" : "python3");
   const inputPath = path.resolve(__dirname, "uploads", fileName);
   const outputDir = path.resolve(__dirname, "outputs");
 
@@ -50,7 +54,8 @@ app.post("/separate", upload.single("audio"), (req, res) => {
 
   const env = { 
     ...process.env, 
-    PATH: `${venvPath};${process.env.PATH}`,
+
+    PATH: `${venvPath}${isWin ? ';' : ':'}${process.env.PATH}`,
     TF_CPP_MIN_LOG_LEVEL: "2",
     PYTHONIOENCODING: "utf-8"
   };
