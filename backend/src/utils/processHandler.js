@@ -1,29 +1,42 @@
 const { spawn } = require("child_process");
 const path = require("path");
 
-exports.spawnSpleeter = (inputPath, outputDir, callback) => {
-  const venvPath = path.resolve(__dirname, "../../venv/Scripts");
-  const pythonExe = path.join(venvPath, "python.exe");
+exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
+  const isWin = process.platform === "win32";
+  const venvPath = path.resolve(__dirname, "../../venv", isWin ? "Scripts" : "bin");
+  const pythonExe = path.join(venvPath, isWin ? "python.exe" : "python3");
 
   const env = { 
     ...process.env, 
-    PATH: `${venvPath};${process.env.PATH}`,
-    // --- ESTABILIZADORES ---
-    CUDA_VISIBLE_DEVICES: "-1",  // Fuerza modo CPU para evitar el error 3221226505
-    TF_CPP_MIN_LOG_LEVEL: "3",   // Silencia advertencias innecesarias
-    PYTHONIOENCODING: "utf-8"
+    PATH: `${venvPath}${isWin ? ';' : ':'}${process.env.PATH}`,
+    // --- ESTABILIZADORES DE SISTEMA ---
+    CUDA_VISIBLE_DEVICES: "-1",   
+    TF_CPP_MIN_LOG_LEVEL: "3",    
+    PYTHONIOENCODING: "utf-8",
+    PYTHONMALLOC: "malloc" 
   };
 
-  const args = [
+  // Argumentos base: definimos formato y límite de tiempo
+  let args = [
     "-m", "spleeter", "separate", 
     "-p", "spleeter:2stems", 
     "-o", outputDir, 
-    "-c", "mp3", 
-    "-b", "128k", 
+    "-c", format, // Dinámico: 'mp3' o 'wav'
+    "-d", "600",  // Límite de 10 minutos
     inputPath
   ];
 
-  const child = spawn(pythonExe, args, { env });
+  // Si el usuario elige MP3, inyectamos la mejora de calidad a 320k
+  if (format === "mp3") {
+    // Insertamos el bitrate antes del path de entrada
+    args.splice(args.length - 1, 0, "-b", "320k");
+  }
+
+  const child = spawn(pythonExe, args, { 
+    env,
+    shell: false 
+  });
+
   let errorLog = "";
 
   child.stderr.on("data", (data) => {
@@ -32,7 +45,7 @@ exports.spawnSpleeter = (inputPath, outputDir, callback) => {
   });
 
   child.on("close", (code) => {
-    console.log(`[DEBUG] Python cerró con código: ${code}`);
+    console.log(`[DEBUG] Python cerró con código: ${code} (Formato: ${format})`);
     callback(code !== 0 ? true : null, errorLog);
   });
 };

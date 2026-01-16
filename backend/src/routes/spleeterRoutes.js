@@ -18,7 +18,7 @@ const upload = multer({ storage });
  * /api/spleeter/separate:
  * post:
  * summary: "Motor de Separación de Audio (Vocales vs Instrumentos)"
- * description: "Envía un archivo de audio (MP3/WAV) para que la IA separe las voces del acompañamiento musical. El resultado son dos archivos MP3."
+ * description: "IA para separar voces. Puedes elegir entre calidad estándar (MP3 320k) o profesional (WAV)."
  * tags: [Spleeter AI]
  * requestBody:
  * required: true
@@ -30,21 +30,17 @@ const upload = multer({ storage });
  * audio:
  * type: string
  * format: binary
- * description: "Archivo de audio a procesar"
+ * description: "Archivo de audio (MP3/WAV)"
+ * format:
+ * type: string
+ * enum: [mp3, wav]
+ * default: mp3
+ * description: "Formato de salida de las pistas separadas"
  * responses:
  * 200:
- * description: "Separación completada exitosamente"
- * content:
- * application/json:
- * example:
- * status: "Success"
- * message: "Audio separado correctamente"
- * info: { originalName: "cancion.mp3", processingTime: "25s", format: "MP3" }
- * files: { vocals: "/outputs/Spleeter_123/vocals.mp3", accompaniment: "/outputs/Spleeter_123/accompaniment.mp3" }
- * 400:
- * description: "No se proporcionó un archivo válido"
+ * description: "Archivos generados con éxito"
  * 500:
- * description: "Error interno en el motor Spleeter o Timeout"
+ * description: "Error en el motor IA"
  */
 router.post("/separate", upload.single("audio"), spleeterController.separateAudio);
 
