@@ -8,13 +8,13 @@ const swaggerSpec = require("./swagger");
 
 // Importar rutas modulares
 const spleeterRoutes = require("./src/routes/spleeterRoutes");
-const usuariosRouter = require("./routes/usuarios"); // La ruta que trajo Kevin
+const usuariosRouter = require("./routes/usuarios");
 const audioRoutes = require("./src/routes/audioRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 1. Asegurar directorios base
+// 1. Asegurar directorios base (Evita errores de "Carpeta no encontrada")
 const dirs = ["uploads", "outputs"];
 dirs.forEach(dir => {
     if (!fs.existsSync(dir)) {
@@ -27,14 +27,17 @@ dirs.forEach(dir => {
 app.use(cors());
 app.use(express.json());
 
-// 3. Servir archivos estáticos
+// 3. Servir archivos estáticos (Para descargar/reproducir los MP3 resultantes)
 app.use("/outputs", express.static(path.join(__dirname, "outputs")));
 
 // 4. Conexión de Rutas
-// Tus rutas modulares (Spleeter)
+// A. Rutas de Spleeter (Modularizadas) -> Endpoint: /api/spleeter/separate
 app.use("/api/spleeter", spleeterRoutes);
 app.use("/api/audio", audioRoutes);
 // Las rutas de Kevin (Usuarios/DB)
+app.use("/usuarios", usuariosRouter);
+
+// B. Rutas de Usuarios (Tu código original) -> Endpoint: /usuarios
 app.use("/usuarios", usuariosRouter);
 
 // 5. Documentación Swagger
@@ -44,8 +47,11 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/", (req, res) => {
     res.json({
         status: "Online",
-        message: "Backend Karaoke Pro - Spleeter Engine Activo",
-        database: "Conectada", // Manteniendo el espíritu del mensaje de Kevin
+        message: "Backend Karaoke Pro - API Activa",
+        services: {
+            spleeter: "Ready",
+            users: "Ready"
+        },
         docs: "/api-docs"
     });
 });
@@ -53,9 +59,9 @@ app.get("/", (req, res) => {
 // 7. Lanzamiento del Servidor
 app.listen(PORT, () => {
     console.log(`=========================================================`);
-    console.log(`🚀 Servidor Organizado: http://localhost:${PORT}`);
-    console.log(`📝 Documentación API:  http://localhost:${PORT}/api-docs`);
-    console.log(`🐍 Motor Spleeter: Configurado en MP3`);
-    console.log(`💾 Base de Datos: Lista.`);
+    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`📝 Swagger disponible en http://localhost:${PORT}/api-docs`);
+    console.log(`🐍 Spleeter Engine: Activo`);
+    console.log(`🍆 Base de Datos: Configurada`);
     console.log(`=========================================================`);
 });

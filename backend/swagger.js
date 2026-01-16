@@ -5,23 +5,22 @@ const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "API Karaoke Pro AI",
+      title: "API Karaoke Pro",
       version: "1.0.0",
-      description:
-        "Backend integral para procesamiento de audio (Spleeter) y gestión de usuarios.",
+      description: "Backend modular para procesamiento con Spleeter y Gestión de Usuarios",
     },
     servers: [
       {
         url: "http://localhost:3000",
-        description: "Servidor local",
+        description: "Servidor Local",
       },
     ],
     paths: {
-      // --- RUTA SPLEETER (AUDIO) ---
+      // --- RUTA SPLEETER (Actualizada a la ruta modular de Fernando) ---
       "/api/spleeter/separate": {
         post: {
           summary: "Separar audio en Voces y Acompañamiento",
-          tags: ["Audio AI"],
+          tags: ["Spleeter"],
           requestBody: {
             content: {
               "multipart/form-data": {
@@ -98,7 +97,7 @@ const options = {
         },
       },
 
-      // --- RUTAS DE USUARIOS ---
+      // --- RUTAS DE USUARIOS (Conservadas de tu rama HEAD) ---
       "/usuarios": {
         get: {
           summary: "Obtener lista de todos los usuarios",
@@ -181,7 +180,20 @@ const options = {
             },
           },
           responses: {
-            200: { description: "Login exitoso" },
+            200: {
+              description: "Login exitoso",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      mensaje: { type: "string" },
+                      usuario: { type: "object" },
+                    },
+                  },
+                },
+              },
+            },
             401: { description: "Credenciales incorrectas" },
             404: { description: "Usuario no encontrado" },
           },
@@ -189,7 +201,8 @@ const options = {
       },
     },
   },
-  apis: [], // Mantenemos vacío para evitar errores de parseo YAML en rutas modulares
+  // Dejamos esto vacío ya que definimos las rutas manualmente arriba
+  apis: [],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
