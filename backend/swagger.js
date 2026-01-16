@@ -17,26 +17,52 @@ const options = {
       },
     ],
     paths: {
-      // --- RUTA SPLEETER (AUDIO) ---
+      // --- RUTA SPLEETER (AUDIO AI) ---
       "/api/spleeter/separate": {
         post: {
           summary: "Separar audio en Voces y Acompañamiento",
           tags: ["Audio AI"],
+          description: "Utiliza IA para separar las voces del instrumental. Permite elegir la calidad de salida (MP3 320k o WAV).",
           requestBody: {
+            required: true,
             content: {
               "multipart/form-data": {
                 schema: {
                   type: "object",
                   properties: {
-                    audio: { type: "string", format: "binary" },
+                    audio: { 
+                      type: "string", 
+                      format: "binary",
+                      description: "Selecciona el archivo MP3 o WAV a procesar"
+                    },
+                    format: { 
+                      type: "string", 
+                      enum: ["mp3", "wav"], 
+                      default: "mp3",
+                      description: "Formato de las pistas resultantes (MP3 para ligereza, WAV para máxima calidad)"
+                    },
                   },
+                  required: ["audio"],
                 },
               },
             },
           },
           responses: {
-            200: { description: "Archivos MP3 generados con éxito" },
-            500: { description: "Error en el procesamiento de audio" },
+            200: { 
+                description: "Procesamiento exitoso",
+                content: {
+                    "application/json": {
+                        example: {
+                            status: "Success",
+                            message: "Audio separado correctamente",
+                            info: { originalName: "cancion.mp3", format: "WAV" },
+                            files: { vocals: "/outputs/folder/vocals.wav", accompaniment: "/outputs/folder/accompaniment.wav" }
+                        }
+                    }
+                }
+            },
+            400: { description: "Falta el archivo de audio" },
+            500: { description: "Error interno en el motor Spleeter o falta de memoria RAM" },
           },
         },
       },
@@ -58,15 +84,13 @@ const options = {
                     audio: {
                       type: "string",
                       format: "binary",
-                      description:
-                        "Selecciona el archivo de audio desde tu equipo",
+                      description: "Selecciona el archivo de audio desde tu equipo",
                     },
                     filterType: {
                       type: "string",
                       enum: ["clean", "vivid", "radio"],
                       default: "clean",
-                      description:
-                        "Tipo de filtro a aplicar para mejorar la voz",
+                      description: "Tipo de filtro a aplicar para mejorar la voz",
                     },
                   },
                 },
@@ -87,13 +111,8 @@ const options = {
                 },
               },
             },
-            400: {
-              description:
-                "Error de validación (HU1: Archivo inválido o corrupto)",
-            },
-            500: {
-              description: "Error interno en el motor de filtros (FFmpeg)",
-            },
+            400: { description: "Archivo inválido o corrupto" },
+            500: { description: "Error interno en el motor de filtros (FFmpeg)" },
           },
         },
       },
@@ -189,7 +208,7 @@ const options = {
       },
     },
   },
-  apis: [], // Mantenemos vacío para evitar errores de parseo YAML en rutas modulares
+  apis: [], 
 };
 
 const swaggerSpec = swaggerJSDoc(options);
