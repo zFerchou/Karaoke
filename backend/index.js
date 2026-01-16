@@ -10,7 +10,7 @@ const swaggerSpec = require("./swagger");
 // Importamos la lógica modular de Spleeter (De la rama Fernando)
 const spleeterRoutes = require("./src/routes/spleeterRoutes");
 // Importamos la lógica de Usuarios (Rescatado de tu rama HEAD)
-const usuariosRouter = require("./routes/usuarios");
+const usuariosRouter = require("./src/routes/usuarios");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
