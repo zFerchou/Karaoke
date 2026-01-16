@@ -27,7 +27,7 @@ app.use(cors());
 app.use(express.json());
 
 // 3. Servir archivos estáticos
-app.use("/outputs", express.static(path.join(__dirname, "outputs")));
+app.use("/outputs", express.static(path.resolve("outputs")));
 
 // 4. Conexión de Rutas
 // Tus rutas modulares (Spleeter)

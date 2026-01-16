@@ -2,12 +2,13 @@ const { spawn } = require("child_process");
 const path = require("path");
 
 exports.spawnSpleeter = (inputPath, outputDir, callback) => {
-  const venvPath = path.resolve(__dirname, "../../venv/Scripts");
-  const pythonExe = path.join(venvPath, "python.exe");
+  const isWin = process.platform === "win32";
+  const venvPath = path.resolve(__dirname, "../../venv", isWin ? "Scripts" : "bin");
+  const pythonExe = path.join(venvPath, isWin ? "python.exe" : "python3");
 
   const env = { 
     ...process.env, 
-    PATH: `${venvPath};${process.env.PATH}`,
+    PATH: `${venvPath}${isWin ? ';' : ':'}${process.env.PATH}`,
     // --- ESTABILIZADORES ---
     CUDA_VISIBLE_DEVICES: "-1",  // Fuerza modo CPU para evitar el error 3221226505
     TF_CPP_MIN_LOG_LEVEL: "3",   // Silencia advertencias innecesarias
