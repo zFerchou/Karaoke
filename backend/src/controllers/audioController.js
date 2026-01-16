@@ -1,6 +1,6 @@
 const audioHandler = require("../utils/audioHandler");
-const path = require("path");
-const fs = require("fs");
+const path = require("node:path");
+const fs = require("node:fs");
 
 exports.uploadAndFilter = (req, res) => {
   if (!req.file)
@@ -9,14 +9,37 @@ exports.uploadAndFilter = (req, res) => {
   const filterType = req.body.filterType || "clean";
   const inputPath = req.file.path;
 
-  const baseName = path.parse(req.file.filename).name;
-  const outputName = `filtered_${filterType}_${baseName}.mp3`;
+  const filtrosValidos = ["clean", "vivid", "radio"];
+  if (!filterType || !filtrosValidos.includes(filterType)) {
+    if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+    return res.status(400).json({
+      error: "Filtro no válido",
+      mensaje: `Los filtros permitidos son los siguientes: ${filtrosValidos.join(
+        ", "
+      )} `,
+    });
+  }
+
+  const safeOriginalName = req.file.originalname
+    .replace(/[^a-z0-9.]/gi, "_")
+    .toLowerCase();
+  const baseName = path.parse(safeOriginalName).name;
+  const outputName = `filtered_${filterType}_${Date.now()}_${baseName}.mp3`;
   const outputPath = path.join(__dirname, "../../outputs", outputName);
 
-  audioHandler.validarAudio(inputPath, (isValid, errorMsg) => {
+  audioHandler.validarAudio(inputPath, (isValid, errorMsg, duration) => {
     if (!isValid) {
       if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
       return res.status(400).json({ error: errorMsg });
+    }
+
+    const MAX_DURATION = 600; //10 minutis en segundos
+    if (duration > MAX_DURATION) {
+      if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+      return res.status(400).json({
+        error: "El audio es muy grande",
+        mensaje: "La duración del audio no debe superar los 10 minutos",
+      });
     }
 
     audioHandler.applyAudioFilter(
@@ -38,6 +61,8 @@ exports.uploadAndFilter = (req, res) => {
           formatInfo: {
             inputOriginal: req.file.originalname,
             outputFormat: "mp3",
+            duration: `${duration.toFixed(2)}s`,
+            filterType: filterType,
           },
         });
       }
