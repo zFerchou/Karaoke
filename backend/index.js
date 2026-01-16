@@ -9,6 +9,7 @@ const swaggerSpec = require("./swagger");
 // Importar rutas modulares
 const spleeterRoutes = require("./src/routes/spleeterRoutes");
 const usuariosRouter = require("./routes/usuarios"); // La ruta que trajo Kevin
+const audioRoutes = require("./src/routes/audioRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +33,7 @@ app.use("/outputs", express.static(path.resolve("outputs")));
 // 4. Conexión de Rutas
 // Tus rutas modulares (Spleeter)
 app.use("/api/spleeter", spleeterRoutes);
+app.use("/api/audio", audioRoutes);
 // Las rutas de Kevin (Usuarios/DB)
 app.use("/usuarios", usuariosRouter);
 
