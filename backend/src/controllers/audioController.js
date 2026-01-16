@@ -6,17 +6,21 @@ exports.uploadAndFilter = (req, res) => {
   if (!req.file)
     return res.status(400).json({ error: "No se subió ningún archivo" });
 
-  const filterType = req.body.filterType || "clean";
   const inputPath = req.file.path;
+  let filterType = req.body.filterType;
+
+  if (typeof filterType !== "string") {
+    filterType = "clean";
+  }
+
+  filterType = filterType.toLowerCase().replace(/[^a-z]/g, "");
 
   const filtrosValidos = ["clean", "vivid", "radio"];
-  if (!filterType || !filtrosValidos.includes(filterType)) {
+  if (!filtrosValidos.includes(filterType)) {
     if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
     return res.status(400).json({
       error: "Filtro no válido",
-      mensaje: `Los filtros permitidos son los siguientes: ${filtrosValidos.join(
-        ", "
-      )} `,
+      mensaje: `Los filtros permitidos son: ${filtrosValidos.join(", ")}`,
     });
   }
 
