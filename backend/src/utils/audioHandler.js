@@ -2,14 +2,44 @@ const { spawn, exec } = require("node:child_process");
 const path = require("node:path");
 
 exports.validarAudio = (filePath, callback) => {
-  const command = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`;
+  // Ajustamos el comando para obtener formato y duración de forma independiente
+  const command = `ffprobe -v error -show_entries format=duration,format_name -of default=noprint_wrappers=1:nokey=1 "${filePath}"`;
 
   exec(command, (error, stdout) => {
     if (error) {
-      return callback(false, "Archivo corrupto o formato no soportado");
+      return callback(
+        false,
+        "Archivo corrupto o no es un formato de audio/video válido"
+      );
     }
-    const duration = Number.parseFloat(stdout);
-    callback(!Number.isNaN(duration), null, duration);
+
+    const output = stdout.trim().split(/\s+/);
+
+    let duration = Number.NaN;
+    let formatName = "";
+
+    output.forEach((val) => {
+      const parsed = Number.parseFloat(val);
+      if (Number.isNaN(parsed)) {
+        formatName = val;
+      } else {
+        duration = parsed;
+      }
+    });
+
+    const formatosProhibidos = ["tty", "bin", "data"];
+    if (formatosProhibidos.some((f) => formatName.includes(f))) {
+      return callback(false, "Tipo de archivo malicioso detectado");
+    }
+
+    if (Number.isNaN(duration)) {
+      return callback(
+        false,
+        "El archivo subido no es un audio o video válido (sin duración detectable)"
+      );
+    }
+
+    callback(true, null, duration);
   });
 };
 

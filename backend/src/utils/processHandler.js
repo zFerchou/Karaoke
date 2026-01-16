@@ -1,7 +1,22 @@
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 const path = require("path");
 
+// --- FUNCIÓN DE LIMPIEZA PREVENTIVA ---
+const limpiarProcesosAnteriores = () => {
+  try {
+    if (process.platform === "win32") {
+      // Mata cualquier proceso de python.exe que esté colgado antes de empezar
+      execSync('taskkill /F /IM python.exe /T', { stdio: 'ignore' });
+    }
+  } catch (e) {
+    // Si no hay procesos que matar, simplemente ignoramos el error
+  }
+};
+
 exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
+  // 1. Ejecutamos la limpieza antes de lanzar el nuevo proceso
+  limpiarProcesosAnteriores();
+
   const isWin = process.platform === "win32";
   const venvPath = path.resolve(__dirname, "../../venv", isWin ? "Scripts" : "bin");
   const pythonExe = path.join(venvPath, isWin ? "python.exe" : "python3");
@@ -13,22 +28,21 @@ exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
     CUDA_VISIBLE_DEVICES: "-1",   
     TF_CPP_MIN_LOG_LEVEL: "3",    
     PYTHONIOENCODING: "utf-8",
-    PYTHONMALLOC: "malloc" 
+    PYTHONMALLOC: "malloc",
+    // Forzamos a que Python no guarde archivos .pyc que puedan corromperse
+    PYTHONDONTWRITEBYTECODE: "1" 
   };
 
-  // Argumentos base: definimos formato y límite de tiempo
   let args = [
     "-m", "spleeter", "separate", 
     "-p", "spleeter:2stems", 
     "-o", outputDir, 
-    "-c", format, // Dinámico: 'mp3' o 'wav'
-    "-d", "600",  // Límite de 10 minutos
+    "-c", format, 
+    "-d", "600",
     inputPath
   ];
 
-  // Si el usuario elige MP3, inyectamos la mejora de calidad a 320k
   if (format === "mp3") {
-    // Insertamos el bitrate antes del path de entrada
     args.splice(args.length - 1, 0, "-b", "320k");
   }
 
@@ -46,6 +60,12 @@ exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
 
   child.on("close", (code) => {
     console.log(`[DEBUG] Python cerró con código: ${code} (Formato: ${format})`);
+    
+    // 2. Limpieza al finalizar: Ayuda a liberar la RAM inmediatamente
+    if (code !== 0) {
+        limpiarProcesosAnteriores();
+    }
+    
     callback(code !== 0 ? true : null, errorLog);
   });
 };

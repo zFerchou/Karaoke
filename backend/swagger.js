@@ -5,7 +5,7 @@ const options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "API Karaoke Pro AI",
+      title: "API Karaoke Pro",
       version: "1.0.0",
       description: "Backend modular con Spleeter Engine (MP3/WAV), Filtros de Voz, Autenticación JWT y Google Login.",
     },
@@ -179,7 +179,20 @@ const options = {
             },
           },
           responses: {
-            200: { description: "Login exitoso" },
+            200: {
+              description: "Login exitoso",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      mensaje: { type: "string" },
+                      usuario: { type: "object" },
+                    },
+                  },
+                },
+              },
+            },
             401: { description: "Credenciales incorrectas" },
           },
         },
@@ -212,6 +225,7 @@ const options = {
       },
     },
   },
+  // Dejamos esto vacío ya que definimos las rutas manualmente arriba
   apis: [], 
 };
 
