@@ -7,7 +7,7 @@ const options = {
     info: {
       title: "API Karaoke Pro",
       version: "1.0.0",
-      description: "Backend modular para procesamiento con Spleeter y Gestión de Usuarios",
+      description: "Backend modular con Spleeter Engine (MP3/WAV), Filtros de Voz, Autenticación JWT y Google Login.",
     },
     servers: [
       {
@@ -15,27 +15,62 @@ const options = {
         description: "Servidor Local",
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
     paths: {
-      // --- RUTA SPLEETER (Actualizada a la ruta modular de Fernando) ---
+      // --- RUTA SPLEETER (AUDIO AI) ---
       "/api/spleeter/separate": {
         post: {
           summary: "Separar audio en Voces y Acompañamiento",
-          tags: ["Spleeter"],
+          tags: ["Audio AI"],
+          description: "Utiliza IA para separar las voces del instrumental. Permite elegir la calidad de salida (MP3 320k o WAV).",
           requestBody: {
+            required: true,
             content: {
               "multipart/form-data": {
                 schema: {
                   type: "object",
                   properties: {
-                    audio: { type: "string", format: "binary" },
+                    audio: { 
+                      type: "string", 
+                      format: "binary",
+                      description: "Selecciona el archivo MP3 o WAV a procesar"
+                    },
+                    format: { 
+                      type: "string", 
+                      enum: ["mp3", "wav"], 
+                      default: "mp3",
+                      description: "Formato de las pistas resultantes (MP3 para ligereza, WAV para máxima calidad)"
+                    },
                   },
+                  required: ["audio"],
                 },
               },
             },
           },
           responses: {
-            200: { description: "Archivos MP3 generados con éxito" },
-            500: { description: "Error en el procesamiento de audio" },
+            200: { 
+                description: "Procesamiento exitoso",
+                content: {
+                    "application/json": {
+                        example: {
+                            status: "Success",
+                            message: "Audio separado correctamente",
+                            info: { originalName: "cancion.mp3", format: "WAV" },
+                            files: { vocals: "/outputs/folder/vocals.wav", accompaniment: "/outputs/folder/accompaniment.wav" }
+                        }
+                    }
+                }
+            },
+            400: { description: "Falta el archivo de audio" },
+            500: { description: "Error interno en el motor Spleeter o falta de memoria RAM" },
           },
         },
       },
@@ -45,8 +80,7 @@ const options = {
         post: {
           summary: "Cargar archivo y aplicar filtros de limpieza/mejora",
           tags: ["Filtro de voz"],
-          description:
-            "Permite subir un audio local, validarlo y aplicarle filtros (clean, vivid, radio) en un solo paso.",
+          description: "Permite subir un audio local y aplicarle filtros (clean, vivid, radio) usando FFmpeg.",
           requestBody: {
             required: true,
             content: {
@@ -54,18 +88,11 @@ const options = {
                 schema: {
                   type: "object",
                   properties: {
-                    audio: {
-                      type: "string",
-                      format: "binary",
-                      description:
-                        "Selecciona el archivo de audio desde tu equipo",
-                    },
+                    audio: { type: "string", format: "binary" },
                     filterType: {
                       type: "string",
                       enum: ["clean", "vivid", "radio"],
                       default: "clean",
-                      description:
-                        "Tipo de filtro a aplicar para mejorar la voz",
                     },
                   },
                 },
@@ -73,26 +100,8 @@ const options = {
             },
           },
           responses: {
-            200: {
-              description: "Audio procesado con éxito",
-              content: {
-                "application/json": {
-                  example: {
-                    status: "Success",
-                    message: "Audio validado y filtrado correctamente",
-                    previewUrl: "/outputs/filtered_clean_Filter_12345.mp3",
-                    originalFile: "Filter_12345.mp3",
-                  },
-                },
-              },
-            },
-            400: {
-              description:
-                "Error de validación (HU1: Archivo inválido o corrupto)",
-            },
-            500: {
-              description: "Error interno en el motor de filtros (FFmpeg)",
-            },
+            200: { description: "Audio procesado con éxito" },
+            500: { description: "Error en el motor de filtros" },
           },
         },
       },
@@ -103,29 +112,12 @@ const options = {
           summary: "Obtener lista de todos los usuarios",
           tags: ["Usuarios"],
           responses: {
-            200: {
-              description: "Lista de usuarios obtenida",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        id: { type: "integer" },
-                        nombre: { type: "string" },
-                        correo: { type: "string" },
-                        rol: { type: "string" },
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            200: { description: "Lista de usuarios obtenida" },
           },
         },
         post: {
           summary: "Registrar un nuevo usuario",
+          description: "Crea un usuario validando email y contraseña mínima de 6 caracteres.",
           tags: ["Usuarios"],
           requestBody: {
             required: true,
@@ -133,20 +125,13 @@ const options = {
               "application/json": {
                 schema: {
                   type: "object",
-                  required: ["nombre", "correo", "contrasena"],
+                  required: ["nombre", "apellidos", "correo", "contrasena"], 
                   properties: {
-                    nombre: { type: "string" },
-                    apellidos: { type: "string" },
-                    correo: { type: "string" },
-                    contrasena: { type: "string" },
-                    rol: { type: "string" },
-                  },
-                  example: {
-                    nombre: "Kevin",
-                    apellidos: "Gomez",
-                    correo: "kevin@test.com",
-                    contrasena: "123456",
-                    rol: "usuario",
+                    nombre: { type: "string", minLength: 1 },
+                    apellidos: { type: "string", minLength: 1 },
+                    correo: { type: "string", format: "email" },
+                    contrasena: { type: "string", minLength: 6 },
+                    rol: { type: "string", default: "usuario" },
                   },
                 },
               },
@@ -154,16 +139,30 @@ const options = {
           },
           responses: {
             200: { description: "Usuario registrado exitosamente" },
-            500: { description: "Error al registrar usuario" },
+            400: { description: "Error de validación" },
+            409: { description: "El correo ya está registrado" },
           },
         },
       },
 
-      // --- RUTA DE LOGIN ---
+      "/usuarios/perfil": {
+        get: {
+          summary: "Obtener perfil (Verificar Token)",
+          tags: ["Usuarios"],
+          description: "Ruta protegida. Requiere enviar el Token JWT en el Header.",
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: { description: "Token válido, devuelve datos del usuario" },
+            401: { description: "No autorizado" },
+          },
+        },
+      },
+
       "/usuarios/login": {
         post: {
-          summary: "Iniciar Sesión (Login)",
+          summary: "Iniciar Sesión (Obtener Token JWT)",
           tags: ["Usuarios"],
+          description: "Verifica credenciales y retorna un Token JWT.",
           requestBody: {
             required: true,
             content: {
@@ -172,7 +171,7 @@ const options = {
                   type: "object",
                   required: ["correo", "contrasena"],
                   properties: {
-                    correo: { type: "string", example: "kevin@test.com" },
+                    correo: { type: "string", example: "usuario@test.com" },
                     contrasena: { type: "string", example: "123456" },
                   },
                 },
@@ -195,14 +194,38 @@ const options = {
               },
             },
             401: { description: "Credenciales incorrectas" },
-            404: { description: "Usuario no encontrado" },
+          },
+        },
+      },
+
+      "/usuarios/google-login": {
+        post: {
+          summary: "Iniciar Sesión con Google",
+          tags: ["Usuarios"],
+          description: "Recibe token de Google y gestiona el acceso/registro automático.",
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["token"],
+                  properties: {
+                    token: { type: "string", description: "Credential Token de Google" },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: { description: "Login Google exitoso" },
+            401: { description: "Token de Google inválido" },
           },
         },
       },
     },
   },
-  // Dejamos esto vacío ya que definimos las rutas manualmente arriba
-  apis: [],
+  apis: [], 
 };
 
 const swaggerSpec = swaggerJSDoc(options);

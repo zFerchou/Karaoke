@@ -1,9 +1,10 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend modular con Spleeter AI, Filtros de Voz y Autenticación",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -15,6 +16,9 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "fluent-ffmpeg": "^2.1.3",
+    "google-auth-library": "^10.5.0",
+    "jsonwebtoken": "^9.0.3",
+    "jwt-decode": "^4.0.0",
     "multer": "^2.0.2",
     "pg": "^8.17.1",
     "swagger-jsdoc": "^6.2.8",

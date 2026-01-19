@@ -13,7 +13,7 @@ exports.uploadAndFilter = (req, res) => {
     filterType = "clean";
   }
 
-  filterType = filterType.toLowerCase().replace(/[^a-z]/g, "");
+  filterType = filterType.toLowerCase().replaceAll(/[^a-z]/g, "");
 
   const filtrosValidos = ["clean", "vivid", "radio"];
   if (!filtrosValidos.includes(filterType)) {
@@ -25,11 +25,15 @@ exports.uploadAndFilter = (req, res) => {
   }
 
   const safeOriginalName = req.file.originalname
-    .replace(/[^a-z0-9.]/gi, "_")
+    .replaceAll(/[^a-z0-9.]/gi, "_")
     .toLowerCase();
   const baseName = path.parse(safeOriginalName).name;
   const outputName = `filtered_${filterType}_${Date.now()}_${baseName}.mp3`;
-  const outputPath = path.join(__dirname, "../../outputs", outputName);
+  const outputPath = path.join(
+    __dirname,
+    "../../outputs/voice_filters",
+    outputName,
+  );
 
   audioHandler.validarAudio(inputPath, (isValid, errorMsg, duration) => {
     if (!isValid) {
@@ -51,8 +55,11 @@ exports.uploadAndFilter = (req, res) => {
       outputPath,
       filterType,
       (success) => {
+        if (fs.existsSync(inputPath)) {
+          fs.unlinkSync(inputPath);
+        }
+
         if (!success) {
-          if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
           return res
             .status(500)
             .json({ error: "Error al procesar el filtro de audio" });
@@ -69,7 +76,7 @@ exports.uploadAndFilter = (req, res) => {
             filterType: filterType,
           },
         });
-      }
+      },
     );
   });
 };
