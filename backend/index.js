@@ -13,6 +13,8 @@ const spleeterRoutes = require("./src/routes/spleeterRoutes");
 const usuariosRouter = require("./src/routes/usuarios");
 const audioRoutes = require("./src/routes/audioRoutes");
 
+const { startCleanupTask } = require("./src/utils/cleanUpTask");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -59,6 +61,8 @@ app.get("/", (req, res) => {
     docs: "/api-docs",
   });
 });
+
+startCleanupTask();
 
 // 7. Lanzamiento del Servidor
 app.listen(PORT, () => {
