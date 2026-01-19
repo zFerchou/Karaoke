@@ -1,14 +1,13 @@
-require("dotenv").config(); // IMPORTANTÍSIMO: Esto debe ir primero
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
-
-// --- IMPORTACIONES ---
 const swaggerUi = require("swagger-ui-express");
-const swaggerSpec = require("./swagger");
 
-// Importar rutas modulares
+// IMPORTAMOS LA CONFIGURACIÓN CORREGIDA
+const swaggerSpec = require("./swagger"); 
+
 const spleeterRoutes = require("./src/routes/spleeterRoutes");
 const usuariosRouter = require("./src/routes/usuarios");
 const audioRoutes = require("./src/routes/audioRoutes");
@@ -27,25 +26,16 @@ dirs.forEach((dir) => {
   }
 });
 
-// 2. Middlewares Globales
 app.use(cors());
 app.use(express.json());
-
-// 3. Servir archivos estáticos (Para descargar/reproducir los archivos resultantes)
 app.use("/outputs", express.static(path.join(__dirname, "outputs")));
 
-// 4. Conexión de Rutas
-// A. Motor Spleeter e IA
+// Conexión de Rutas
 app.use("/api/spleeter", spleeterRoutes);
 app.use("/api/audio", audioRoutes);
-
-// B. Gestión de Usuarios y DB
 app.use("/usuarios", usuariosRouter);
 
-// B. Rutas de Usuarios (Tu código original) -> Endpoint: /usuarios
-app.use("/usuarios", usuariosRouter);
-
-// 5. Documentación Swagger
+// Swagger
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 6. Ruta de salud (Health Check)
