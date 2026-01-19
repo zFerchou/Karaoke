@@ -25,6 +25,8 @@ exports.uploadAndFilter = (req, res) => {
   }
 
   const safeOriginalName = req.file.originalname
+    .normalize("NFD")
+    .replaceAll(/[\u0300-\u036f]/g, "")
     .replaceAll(/[^a-z0-9.]/gi, "_")
     .toLowerCase();
   const baseName = path.parse(safeOriginalName).name;
@@ -68,7 +70,8 @@ exports.uploadAndFilter = (req, res) => {
         res.json({
           status: "Success",
           message: "Audio procesado correctamente",
-          previewUrl: `/outputs/${outputName}`,
+          previewUrl: `/outputs/voice_filters/${outputName}`,
+          downloadUrl: `/api/audio/download/${outputName}`,
           formatInfo: {
             inputOriginal: req.file.originalname,
             outputFormat: "mp3",
@@ -79,4 +82,30 @@ exports.uploadAndFilter = (req, res) => {
       },
     );
   });
+};
+
+exports.downloadFile = (req, res) => {
+  const { filename } = req.params;
+
+  const safeFilename = path.basename(filename);
+  const filePath = path.join(
+    __dirname,
+    "../../outputs/voice_filters",
+    safeFilename,
+  );
+
+  if (fs.existsSync(filePath)) {
+    return res.download(filePath, (err) => {
+      if (err) {
+        console.error("Error al descargar el archivo: ", err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: "No se pudo completar la descarga" });
+        }
+      }
+    });
+  }
+
+  return res
+    .status(404)
+    .json({ error: "El archivo solicitado ya no existe en el servidor." });
 };

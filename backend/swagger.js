@@ -7,7 +7,8 @@ const options = {
     info: {
       title: "API Karaoke Pro",
       version: "1.0.0",
-      description: "Backend modular con Spleeter Engine (MP3/WAV), Filtros de Voz, Autenticación JWT y Google Login.",
+      description:
+        "Backend modular con Spleeter Engine (MP3/WAV), Filtros de Voz, Autenticación JWT y Google Login.",
     },
     servers: [
       {
@@ -30,7 +31,8 @@ const options = {
         post: {
           summary: "Separar audio en Voces y Acompañamiento",
           tags: ["Audio AI"],
-          description: "Utiliza IA para separar las voces del instrumental. Permite elegir la calidad de salida (MP3 320k o WAV).",
+          description:
+            "Utiliza IA para separar las voces del instrumental. Permite elegir la calidad de salida (MP3 320k o WAV).",
           requestBody: {
             required: true,
             content: {
@@ -38,16 +40,17 @@ const options = {
                 schema: {
                   type: "object",
                   properties: {
-                    audio: { 
-                      type: "string", 
+                    audio: {
+                      type: "string",
                       format: "binary",
-                      description: "Selecciona el archivo MP3 o WAV a procesar"
+                      description: "Selecciona el archivo MP3 o WAV a procesar",
                     },
-                    format: { 
-                      type: "string", 
-                      enum: ["mp3", "wav"], 
+                    format: {
+                      type: "string",
+                      enum: ["mp3", "wav"],
                       default: "mp3",
-                      description: "Formato de las pistas resultantes (MP3 para ligereza, WAV para máxima calidad)"
+                      description:
+                        "Formato de las pistas resultantes (MP3 para ligereza, WAV para máxima calidad)",
                     },
                   },
                   required: ["audio"],
@@ -56,21 +59,27 @@ const options = {
             },
           },
           responses: {
-            200: { 
-                description: "Procesamiento exitoso",
-                content: {
-                    "application/json": {
-                        example: {
-                            status: "Success",
-                            message: "Audio separado correctamente",
-                            info: { originalName: "cancion.mp3", format: "WAV" },
-                            files: { vocals: "/outputs/folder/vocals.wav", accompaniment: "/outputs/folder/accompaniment.wav" }
-                        }
-                    }
-                }
+            200: {
+              description: "Procesamiento exitoso",
+              content: {
+                "application/json": {
+                  example: {
+                    status: "Success",
+                    message: "Audio separado correctamente",
+                    info: { originalName: "cancion.mp3", format: "WAV" },
+                    files: {
+                      vocals: "/outputs/folder/vocals.wav",
+                      accompaniment: "/outputs/folder/accompaniment.wav",
+                    },
+                  },
+                },
+              },
             },
             400: { description: "Falta el archivo de audio" },
-            500: { description: "Error interno en el motor Spleeter o falta de memoria RAM" },
+            500: {
+              description:
+                "Error interno en el motor Spleeter o falta de memoria RAM",
+            },
           },
         },
       },
@@ -80,7 +89,8 @@ const options = {
         post: {
           summary: "Cargar archivo y aplicar filtros de limpieza/mejora",
           tags: ["Filtro de voz"],
-          description: "Permite subir un audio local y aplicarle filtros (clean, vivid, radio) usando FFmpeg.",
+          description:
+            "Permite subir un audio local y aplicarle filtros (clean, vivid, radio) usando FFmpeg.",
           requestBody: {
             required: true,
             content: {
@@ -105,6 +115,40 @@ const options = {
           },
         },
       },
+      "/api/audio/download/{filename}": {
+        get: {
+          summary: "Descargar un audio procesado",
+          tags: ["Filtro de voz"],
+          description:
+            "Permite descargar el archivo MP3 resultante del filtrado usando el nombre del archivo generado.",
+          parameters: [
+            {
+              name: "filename",
+              in: "path",
+              required: true,
+              description:
+                "Nombre del archivo (ej. filtered_clean_17000000_audio.mp3)",
+              schema: {
+                type: "string",
+              },
+            },
+          ],
+          responses: {
+            200: {
+              description: "Archivo binario (audio/mpeg)",
+              content: {
+                "audio/mpeg": {
+                  schema: {
+                    type: "string",
+                    format: "binary",
+                  },
+                },
+              },
+            },
+            404: { description: "El archivo no existe" },
+          },
+        },
+      },
 
       // --- RUTAS DE USUARIOS (Conservadas de tu rama HEAD) ---
       "/usuarios": {
@@ -117,7 +161,8 @@ const options = {
         },
         post: {
           summary: "Registrar un nuevo usuario",
-          description: "Crea un usuario validando email y contraseña mínima de 6 caracteres.",
+          description:
+            "Crea un usuario validando email y contraseña mínima de 6 caracteres.",
           tags: ["Usuarios"],
           requestBody: {
             required: true,
@@ -125,7 +170,7 @@ const options = {
               "application/json": {
                 schema: {
                   type: "object",
-                  required: ["nombre", "apellidos", "correo", "contrasena"], 
+                  required: ["nombre", "apellidos", "correo", "contrasena"],
                   properties: {
                     nombre: { type: "string", minLength: 1 },
                     apellidos: { type: "string", minLength: 1 },
@@ -149,7 +194,8 @@ const options = {
         get: {
           summary: "Obtener perfil (Verificar Token)",
           tags: ["Usuarios"],
-          description: "Ruta protegida. Requiere enviar el Token JWT en el Header.",
+          description:
+            "Ruta protegida. Requiere enviar el Token JWT en el Header.",
           security: [{ bearerAuth: [] }],
           responses: {
             200: { description: "Token válido, devuelve datos del usuario" },
@@ -202,7 +248,8 @@ const options = {
         post: {
           summary: "Iniciar Sesión con Google",
           tags: ["Usuarios"],
-          description: "Recibe token de Google y gestiona el acceso/registro automático.",
+          description:
+            "Recibe token de Google y gestiona el acceso/registro automático.",
           requestBody: {
             required: true,
             content: {
@@ -211,7 +258,10 @@ const options = {
                   type: "object",
                   required: ["token"],
                   properties: {
-                    token: { type: "string", description: "Credential Token de Google" },
+                    token: {
+                      type: "string",
+                      description: "Credential Token de Google",
+                    },
                   },
                 },
               },
@@ -225,7 +275,7 @@ const options = {
       },
     },
   },
-  apis: [], 
+  apis: [],
 };
 
 const swaggerSpec = swaggerJSDoc(options);

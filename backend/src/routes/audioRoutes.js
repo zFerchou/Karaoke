@@ -35,7 +35,9 @@ const upload = multer({ storage });
 router.post(
   "/upload-filter",
   upload.single("audio"),
-  audioController.uploadAndFilter
+  audioController.uploadAndFilter,
 );
+
+router.get("/download/:filename", audioController.downloadFile);
 
 module.exports = router;
