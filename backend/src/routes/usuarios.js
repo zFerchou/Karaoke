@@ -27,6 +27,100 @@ const verificarToken = (req, res, next) => {
   });
 };
 
+/**
+ * @swagger
+ * tags:
+ *   name: Usuarios
+ *   description: Endpoints para gestión de usuarios
+ */
+
+/**
+ * @swagger
+ * /api/usuarios:
+ *   get:
+ *     summary: Obtener todos los usuarios
+ *     tags: [Usuarios]
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ */
+
+/**
+ * @swagger
+ * /api/usuarios:
+ *   post:
+ *     summary: Crear un usuario
+ *     tags: [Usuarios]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nombre:
+ *                 type: string
+ *               apellidos:
+ *                 type: string
+ *               correo:
+ *                 type: string
+ *               contrasena:
+ *                 type: string
+ *               rol:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Usuario creado exitosamente
+ */
+
+/**
+ * @swagger
+ * /api/usuarios/login:
+ *   post:
+ *     summary: Login de usuario
+ *     tags: [Usuarios]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               correo:
+ *                 type: string
+ *               contrasena:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login exitoso
+ */
+
+/**
+ * @swagger
+ * /api/usuarios/google-login:
+ *   post:
+ *     summary: Login con Google
+ *     tags: [Usuarios]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login Google exitoso
+ */
+
 // --- RUTA: OBTENER TODOS LOS USUARIOS ---
 router.get("/", async (req, res) => {
   try {
