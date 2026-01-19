@@ -26,7 +26,7 @@ const upload = multer({ storage });
  *   post:
  *     summary: Aplicar filtros de voz a un archivo de audio
  *     tags:
- *       - Vocal Enhancement
+ *       - Filtros para la voz
  *     requestBody:
  *       required: true
  *       content:
@@ -69,7 +69,7 @@ router.post(
  *   get:
  *     summary: Descargar un audio procesado
  *     tags:
- *       - Vocal Enhancement
+ *       - Filtros para la voz
  *     parameters:
  *       - in: path
  *         name: filename
