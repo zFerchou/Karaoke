@@ -7,73 +7,81 @@ exports.separateAudio = (req, res) => {
         return res.status(400).json({ error: "No se recibió archivo de audio." });
     }
 
+    // Configuración
     const format = (req.body.format || "mp3").toLowerCase();
-    // Usar separation según el Swagger corregido
-    const separation = (req.body.separation || "both").toLowerCase();
+    const separation = (req.body.separation || "vocals").toLowerCase();
     const startTime = Date.now();
+    
+    // Nombres de archivo
     const originalName = req.file.originalname;
-    const folderName = path.parse(req.file.filename).name;
+    // IMPORTANTE: El nombre de la carpeta suele ser el nombre del archivo sin extensión
+    const filenameWithoutExt = path.parse(req.file.filename).name; 
     
     const inputPath = path.resolve(__dirname, "../../uploads", req.file.filename);
     const outputDir = path.resolve(__dirname, "../../outputs");
 
-    console.log(`\n [NUEVA TAREA] ──────────────────────────────────────────`);
-    console.log(` Archivo: ${originalName} | Pedido: ${separation.toUpperCase()}`);
+    console.log(`\n🔵 [INICIO] Tarea Spleeter`);
+    console.log(`   📂 Input: ${req.file.filename}`);
+    console.log(`   🎯 Output esperado en: outputs/${filenameWithoutExt}`);
 
     spawnSpleeter(inputPath, outputDir, format, (err, logOutput) => {
+        // Borramos el input original para limpiar
         if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
 
         if (err) {
+            console.error("❌ Error en Python:", err);
             return res.status(500).json({ error: "Fallo en motor IA", details: logOutput });
         }
 
-        const finalFolder = path.join(outputDir, folderName);
-        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-
-        // Rutas públicas para el JSON
-        const vocalUrl = `/outputs/${folderName}/vocals.${format}`;
-        const accUrl = `/outputs/${folderName}/accompaniment.${format}`;
+        // --- ZONA DE DIAGNÓSTICO ---
+        const expectedFolder = path.join(outputDir, filenameWithoutExt);
         
-        // Rutas físicas para borrar archivos no deseados
-        const vocalFile = path.join(finalFolder, `vocals.${format}`);
-        const accFile = path.join(finalFolder, `accompaniment.${format}`);
+        // 1. ¿Existe la carpeta?
+        if (!fs.existsSync(expectedFolder)) {
+            console.error(`❌ La carpeta esperada NO existe: ${expectedFolder}`);
+            
+            // DIAGNÓSTICO: Listar qué carpetas SÍ existen
+            console.log("📂 Contenido actual de /outputs/:");
+            try {
+                const existingFolders = fs.readdirSync(outputDir);
+                existingFolders.forEach(f => console.log(`   - ${f}`));
+            } catch (e) { console.log("   (No se pudo leer outputs)"); }
 
-        let responseFiles = {};
-
-        // Lógica de selección de archivos
-        if (separation === "vocals") {
-            if (fs.existsSync(vocalFile)) {
-                responseFiles.vocals = vocalUrl;
-            } else {
-                return res.status(500).json({ error: "No se generó el archivo de vocals." });
-            }
-            if (fs.existsSync(accFile)) fs.unlinkSync(accFile);
-        } 
-        else if (separation === "accompaniment") {
-            if (fs.existsSync(accFile)) {
-                responseFiles.accompaniment = accUrl;
-            } else {
-                return res.status(500).json({ error: "No se generó el archivo de accompaniment." });
-            }
-            if (fs.existsSync(vocalFile)) fs.unlinkSync(vocalFile);
-        } 
-        else if (separation === "both") {
-            if (fs.existsSync(vocalFile) && fs.existsSync(accFile)) {
-                responseFiles.vocals = vocalUrl;
-                responseFiles.accompaniment = accUrl;
-            } else {
-                return res.status(500).json({ error: "No se generaron ambos archivos correctamente." });
-            }
-        } else {
-            return res.status(400).json({ error: "Parámetro 'separation' inválido." });
+            return res.status(500).json({ 
+                error: "Spleeter terminó bien, pero no creó la carpeta esperada.",
+                debug: "Revisar consola del backend para ver nombres de carpetas."
+            });
         }
 
-        console.log(`✅ [ÉXITO] ${duration}s | Entregado: ${separation}`);
+        // 2. ¿Existen los archivos dentro?
+        const vocalFile = path.join(expectedFolder, `vocals.${format}`);
+        const accFile = path.join(expectedFolder, `accompaniment.${format}`);
 
-        return res.json({
-            status: "Success",
-            info: { originalName, processingTime: `${duration}s`, selected: separation },
-            files: responseFiles
-        });
+        let foundFiles = {};
+        
+        // Verificamos qué archivos existen realmente (a veces devuelve wav aunque pidas mp3)
+        const filesInFolder = fs.readdirSync(expectedFolder);
+        console.log(`📂 Archivos encontrados dentro de la carpeta:`, filesInFolder);
+
+        // Buscamos coincidencias flexibles
+        const actualVocal = filesInFolder.find(f => f.includes('vocals'));
+        const actualAcc = filesInFolder.find(f => f.includes('accompaniment'));
+
+        if (actualVocal) foundFiles.vocals = `/outputs/${filenameWithoutExt}/${actualVocal}`;
+        if (actualAcc) foundFiles.accompaniment = `/outputs/${filenameWithoutExt}/${actualAcc}`;
+
+        if (Object.keys(foundFiles).length > 0) {
+            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+            console.log(`✅ [ÉXITO] Archivos localizados correctamente en ${duration}s`);
+            
+            return res.json({
+                status: "Success",
+                info: { processingTime: `${duration}s` },
+                files: foundFiles
+            });
+        } else {
+            console.error("❌ Carpeta encontrada pero vacía o sin archivos correctos.");
+            return res.status(500).json({ error: "Carpeta creada pero archivos no encontrados." });
+        }
     });
 };

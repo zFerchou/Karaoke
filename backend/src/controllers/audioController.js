@@ -15,7 +15,7 @@ exports.uploadAndFilter = (req, res) => {
 
   filterType = filterType.toLowerCase().replaceAll(/[^a-z]/g, "");
 
-  const filtrosValidos = ["clean", "vivid", "radio"];
+  const filtrosValidos = ["clean", "vivid", "radio","norm"];
   if (!filtrosValidos.includes(filterType)) {
     if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
     return res.status(400).json({
