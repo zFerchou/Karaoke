@@ -15,27 +15,25 @@ const upload = multer({ storage });
 /**
  * @swagger
  * /api/audio/upload-filter:
- * post:
- * summary: "Cargar archivo y aplicar filtro de limpieza (HU1, HU2)"
- * tags: [Vocal Enhancement]
- * requestBody:
- * content:
- * multipart/form-data:
- * schema:
- * type: object
- * properties:
- * audio:
- * type: string
- * format: binary
- * filterType:
- * type: string
- * enum: [clean, vivid, radio, norm]
- * default: clean
+ *   post:
+ *     summary: "Aplicar filtros de voz"
+ *     tags: ["Vocal Enhancement"]
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               audio:
+ *                 type: string
+ *                 format: binary
+ *               filterType:
+ *                 type: string
+ *                 enum: ["clean", "vivid", "radio", "norm"]
+ *     responses:
+ *       200:
+ *         description: "OK"
  */
-router.post(
-  "/upload-filter",
-  upload.single("audio"),
-  audioController.uploadAndFilter
-);
+router.post("/upload-filter", upload.single("audio"), audioController.uploadAndFilter);
 
 module.exports = router;

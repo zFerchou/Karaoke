@@ -1,20 +1,19 @@
 const { spawn, execSync } = require("child_process");
 const path = require("path");
 
-// --- FUNCIÓN DE LIMPIEZA PREVENTIVA ---
+// --- LIMPIEZA DE MEMORIA ---
 const limpiarProcesosAnteriores = () => {
   try {
     if (process.platform === "win32") {
-      // Mata cualquier proceso de python.exe que esté colgado antes de empezar
+      // Elimina cualquier rastro de Python colgado en RAM
       execSync('taskkill /F /IM python.exe /T', { stdio: 'ignore' });
     }
   } catch (e) {
-    // Si no hay procesos que matar, simplemente ignoramos el error
+    // Silencioso si no hay procesos
   }
 };
 
 exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
-  // 1. Ejecutamos la limpieza antes de lanzar el nuevo proceso
   limpiarProcesosAnteriores();
 
   const isWin = process.platform === "win32";
@@ -24,13 +23,14 @@ exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
   const env = { 
     ...process.env, 
     PATH: `${venvPath}${isWin ? ';' : ':'}${process.env.PATH}`,
-    // --- ESTABILIZADORES DE SISTEMA ---
-    CUDA_VISIBLE_DEVICES: "-1",   
-    TF_CPP_MIN_LOG_LEVEL: "3",    
-    PYTHONIOENCODING: "utf-8",
-    PYTHONMALLOC: "malloc",
-    // Forzamos a que Python no guarde archivos .pyc que puedan corromperse
-    PYTHONDONTWRITEBYTECODE: "1" 
+    // --- ESTABILIZADORES Y ACELERADORES ---
+    CUDA_VISIBLE_DEVICES: "-1",       // Desactiva GPU mal configurada (evita cuellos de botella)
+    TF_CPP_MIN_LOG_LEVEL: "3",        // Menos logs = menos uso de CPU
+    TF_ENABLE_ONEDNN_OPTS: "1",       // ACELERACIÓN: Activa optimizaciones de hardware modernas
+    PYTHONMALLOC: "malloc",           // Gestión de RAM directa para evitar fragmentación
+    PYTHONDONTWRITEBYTECODE: "1",     // No genera basura .pyc
+    OMP_NUM_THREADS: "2",             // Usa menos hilos para evitar saturar RAM
+    PYTHONIOENCODING: "utf-8"
   };
 
   let args = [
@@ -46,26 +46,18 @@ exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
     args.splice(args.length - 1, 0, "-b", "320k");
   }
 
-  const child = spawn(pythonExe, args, { 
-    env,
-    shell: false 
-  });
+  const child = spawn(pythonExe, args, { env, shell: false });
 
   let errorLog = "";
-
   child.stderr.on("data", (data) => {
     errorLog += data.toString();
     process.stdout.write(`[Python Log]: ${data}`);
   });
 
   child.on("close", (code) => {
-    console.log(`[DEBUG] Python cerró con código: ${code} (Formato: ${format})`);
-    
-    // 2. Limpieza al finalizar: Ayuda a liberar la RAM inmediatamente
-    if (code !== 0) {
-        limpiarProcesosAnteriores();
-    }
-    
+    console.log(`[DEBUG] Python terminó proceso con código: ${code}`);
+    // Si falló, limpiamos inmediatamente para liberar la RAM
+    if (code !== 0) limpiarProcesosAnteriores();
     callback(code !== 0 ? true : null, errorLog);
   });
 };

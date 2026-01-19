@@ -4,71 +4,76 @@ const fs = require("fs");
 
 exports.separateAudio = (req, res) => {
     if (!req.file) {
-        return res.status(400).json({ error: "No se recibió ningún archivo de audio." });
+        return res.status(400).json({ error: "No se recibió archivo de audio." });
     }
 
-    // Obtenemos el formato del body (si no viene, por defecto mp3)
     const format = (req.body.format || "mp3").toLowerCase();
+    // Usar separation según el Swagger corregido
+    const separation = (req.body.separation || "both").toLowerCase();
     const startTime = Date.now();
-    const fileName = req.file.filename;
     const originalName = req.file.originalname;
-    const folderName = path.parse(fileName).name;
+    const folderName = path.parse(req.file.filename).name;
     
-    const inputPath = path.resolve(__dirname, "../../uploads", fileName);
+    const inputPath = path.resolve(__dirname, "../../uploads", req.file.filename);
     const outputDir = path.resolve(__dirname, "../../outputs");
 
     console.log(`\n [NUEVA TAREA] ──────────────────────────────────────────`);
-    console.log(` Archivo Original: ${originalName}`);
-    console.log(` Formato Salida:   ${format.toUpperCase()}`);
-    console.log(` Estado:           Iniciando motor Spleeter...`);
+    console.log(` Archivo: ${originalName} | Pedido: ${separation.toUpperCase()}`);
 
     spawnSpleeter(inputPath, outputDir, format, (err, logOutput) => {
+        if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
+
         if (err) {
-            console.error(`❌ [FALLO CRÍTICO] Error al procesar ${originalName}`);
-            if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-            return res.status(500).json({ 
-                error: "El motor Spleeter falló.",
-                details: logOutput || "Error interno de Python."
-            });
+            return res.status(500).json({ error: "Fallo en motor IA", details: logOutput });
         }
 
         const finalFolder = path.join(outputDir, folderName);
-        let attempts = 0;
+        const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+
+        // Rutas públicas para el JSON
+        const vocalUrl = `/outputs/${folderName}/vocals.${format}`;
+        const accUrl = `/outputs/${folderName}/accompaniment.${format}`;
         
-        // Intervalo para verificar cuando la IA termine de escribir los archivos
-        const interval = setInterval(() => {
-            attempts++;
-            const vocalPath = path.join(finalFolder, `vocals.${format}`);
+        // Rutas físicas para borrar archivos no deseados
+        const vocalFile = path.join(finalFolder, `vocals.${format}`);
+        const accFile = path.join(finalFolder, `accompaniment.${format}`);
 
-            if (fs.existsSync(vocalPath)) {
-                clearInterval(interval);
-                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-                
-                if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-                
-                console.log(`✅ [ÉXITO] Procesado en ${duration}s (${format.toUpperCase()})`);
+        let responseFiles = {};
 
-                return res.json({
-                    status: "Success",
-                    message: "Audio separado correctamente",
-                    info: {
-                        originalName,
-                        processingTime: `${duration}s`,
-                        format: format.toUpperCase()
-                    },
-                    files: {
-                        vocals: `/outputs/${folderName}/vocals.${format}`,
-                        accompaniment: `/outputs/${folderName}/accompaniment.${format}`
-                    }
-                });
+        // Lógica de selección de archivos
+        if (separation === "vocals") {
+            if (fs.existsSync(vocalFile)) {
+                responseFiles.vocals = vocalUrl;
+            } else {
+                return res.status(500).json({ error: "No se generó el archivo de vocals." });
             }
-
-            // Timeout tras 3 minutos (180 intentos de 1 segundo)
-            if (attempts >= 180) {
-                clearInterval(interval);
-                if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
-                res.status(500).json({ error: "Tiempo de espera agotado." });
+            if (fs.existsSync(accFile)) fs.unlinkSync(accFile);
+        } 
+        else if (separation === "accompaniment") {
+            if (fs.existsSync(accFile)) {
+                responseFiles.accompaniment = accUrl;
+            } else {
+                return res.status(500).json({ error: "No se generó el archivo de accompaniment." });
             }
-        }, 1000);
+            if (fs.existsSync(vocalFile)) fs.unlinkSync(vocalFile);
+        } 
+        else if (separation === "both") {
+            if (fs.existsSync(vocalFile) && fs.existsSync(accFile)) {
+                responseFiles.vocals = vocalUrl;
+                responseFiles.accompaniment = accUrl;
+            } else {
+                return res.status(500).json({ error: "No se generaron ambos archivos correctamente." });
+            }
+        } else {
+            return res.status(400).json({ error: "Parámetro 'separation' inválido." });
+        }
+
+        console.log(`✅ [ÉXITO] ${duration}s | Entregado: ${separation}`);
+
+        return res.json({
+            status: "Success",
+            info: { originalName, processingTime: `${duration}s`, selected: separation },
+            files: responseFiles
+        });
     });
 };
