@@ -10,7 +10,7 @@ const swaggerSpec = require("./swagger");
 const spleeterRoutes = require("./src/routes/spleeterRoutes");
 const usuariosRouter = require("./src/routes/usuarios");
 const audioRoutes = require("./src/routes/audioRoutes");
-const transcribeRoutes = require("./src/routes/transcribeRoutes");
+const transcribeRoutes = require('./routes/transcribeRoutes');
 const { startCleanupTask } = require("./src/utils/cleanUpTask");
 
 const app = express();
@@ -35,7 +35,7 @@ app.use("/outputs", express.static(path.join(__dirname, "outputs")));
 // 4. CONEXIÓN DE RUTAS API
 app.use("/api/spleeter", spleeterRoutes);
 app.use("/api/audio", audioRoutes);
-app.use("/api/transcribe", transcribeRoutes);
+app.use('/api/transcribe', transcribeRoutes); // <--- ESTO ES LO QUE ARREGLA EL 404
 app.use("/usuarios", usuariosRouter);
 
 // 5. DOCUMENTACIÓN SWAGGER

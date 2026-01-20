@@ -40,6 +40,24 @@ export const separateAudio = async (file, separationType) => {
   }
 };
 
+// audioService.js
+export const transcribeAudio = async (file) => {
+  const formData = new FormData();
+  formData.append('audio', file);
+  formData.append('model', 'base'); 
+
+  try {
+    // CAMBIO AQUÍ: Agregamos /whisper al final
+    const response = await axios.post(`${BASE_URL}/transcribe/whisper`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data; 
+  } catch (error) {
+    console.error("Error en Whisper:", error);
+    throw error;
+  }
+};
+
 // Función genérica para obtener URL de descarga
 // NOTA: Ajusta esto según si tu backend devuelve rutas diferentes para spleeter
 export const getDownloadUrl = (filename) => {
