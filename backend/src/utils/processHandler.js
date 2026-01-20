@@ -20,17 +20,17 @@ exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
   const venvPath = path.resolve(__dirname, "../../venv", isWin ? "Scripts" : "bin");
   const pythonExe = path.join(venvPath, isWin ? "python.exe" : "python3");
 
-  const env = { 
-    ...process.env, 
-    PATH: `${venvPath}${isWin ? ';' : ':'}${process.env.PATH}`,
+  const env = {
+    ...process.env,
+    PATH: `${venvPath}${isWin ? ";" : ":"}${process.env.PATH}`,
     // --- ESTABILIZADORES Y ACELERADORES ---
-    CUDA_VISIBLE_DEVICES: "-1",       // Desactiva GPU mal configurada (evita cuellos de botella)
-    TF_CPP_MIN_LOG_LEVEL: "3",        // Menos logs = menos uso de CPU
-    TF_ENABLE_ONEDNN_OPTS: "1",       // ACELERACIÓN: Activa optimizaciones de hardware modernas
-    PYTHONMALLOC: "malloc",           // Gestión de RAM directa para evitar fragmentación
-    PYTHONDONTWRITEBYTECODE: "1",     // No genera basura .pyc
-    OMP_NUM_THREADS: "2",             // Usa menos hilos para evitar saturar RAM
-    PYTHONIOENCODING: "utf-8"
+    CUDA_VISIBLE_DEVICES: "-1", // Obliga a usar CPU (la GPU mal configurada crashea VS Code)
+    TF_CPP_MIN_LOG_LEVEL: "3",
+    OMP_NUM_THREADS: "1", // Limita a UN solo hilo. Es más lento, pero no satura la RAM
+    MKL_NUM_THREADS: "1", // Evita que las librerías matemáticas disparen el consumo
+    TF_NUM_INTRAOP_THREADS: "1",
+    TF_NUM_INTEROP_THREADS: "1",
+    PYTHONMALLOC: "malloc",
   };
 
   let args = [
