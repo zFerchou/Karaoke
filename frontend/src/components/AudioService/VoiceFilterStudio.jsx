@@ -8,7 +8,7 @@ const BASE_SERVER_URL = "http://localhost:3000";
 const FILTER_OPTIONS = [
   { id: 'clean', label: 'Limpieza (Clean)', desc: 'Elimina ruido de fondo', color: '#3b82f6' },
   { id: 'vivid', label: 'Vívido', desc: 'Realza frecuencias altas', color: '#a855f7' },
-  { id: 'radio', label: 'Radio AM', desc: 'Efecto vintage/telefónico', color: '#f59e0b' },
+  { id: 'radio', label: 'Radio', desc: 'Efecto vintage/telefónico', color: '#f59e0b' },
   { id: 'norm', label: 'Normalizar', desc: 'Equilibra el volumen', color: '#22c55e' },
 ];
 
@@ -54,6 +54,13 @@ const VoiceFilterStudio = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const isValidType = file.type.startsWith("audio/") || file.type === "video/mp4";
+      
+      if (!isValidType) {
+        setError("Formato no soportado. Sube un audio o video MP4");
+        return;
+      }
+
       setFiles(prev => ({ ...prev, [mode]: file }));
       setResults(prev => ({ ...prev, [mode]: null }));
       setError(null);
@@ -75,6 +82,8 @@ const VoiceFilterStudio = () => {
         data = await processAudio(currentFile, selectedOption);
         if (data?.downloadUrl) finalUrl = `${BASE_SERVER_URL}${data.downloadUrl}`;
         else if (data?.filename) finalUrl = `${BASE_SERVER_URL}/api/audio/download/${data.filename}`;
+        
+        if (!finalUrl) throw new Error("No se pudo obtener la ruta del audio procesado.");
         setResults(prev => ({ ...prev, filter: { type: 'audio', url: finalUrl } }));
 
       } else if (mode === 'spleeter') {
@@ -136,7 +145,13 @@ const VoiceFilterStudio = () => {
         <div className="vfs-content">
           <div className="vfs-controls">
             <div className={`vfs-upload-area ${currentFile ? 'active' : ''}`} onClick={() => fileInputRef.current.click()}>
-              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="audio/*" style={{ display: 'none' }} />
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileChange} 
+                accept="audio/*,video/mp4" 
+                style={{ display: 'none' }} 
+              />
               <div className="vfs-upload-content">
                 {currentFile ? (
                   <>

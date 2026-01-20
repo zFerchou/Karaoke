@@ -5,66 +5,68 @@ const path = require("path");
 const fs = require("fs");
 const swaggerUi = require("swagger-ui-express");
 
-// 1. IMPORTACIÓN DE CONFIGURACIONES Y RUTAS
+// Configuración de Swagger
 const swaggerSpec = require("./swagger"); 
+
+// Importación de Rutas
 const spleeterRoutes = require("./src/routes/spleeterRoutes");
-const usuariosRouter = require("./src/routes/usuarios");
 const audioRoutes = require("./src/routes/audioRoutes");
 const transcribeRoutes = require('./src/routes/transcribeRoutes');
+const transcribeRoutes = require("./src/routes/transcribeRoutes");
+const usuariosRouter = require("./src/routes/usuarios");
+
+// Utilidades
 const { startCleanupTask } = require("./src/utils/cleanUpTask");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 2. CONFIGURACIÓN DE DIRECTORIOS (UNIFICADA)
-// Incluimos voice_filters para que el frontend no falle al procesar audio
-const directorios = ["uploads", "outputs", "outputs/voice_filters"];
-directorios.forEach((dir) => {
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-        console.log(`📁 Carpeta garantizada: ${dir}`);
-    }
+// 1. Asegurar directorios base (incluyendo filtros de voz y subcarpetas)
+const dirs = ["uploads", "outputs", "outputs/voice_filters"];
+dirs.forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`📁 Carpeta asegurada: ${dir}`);
+  }
 });
 
-// 3. MIDDLEWARES
+// 2. Middlewares
 app.use(cors());
 app.use(express.json());
-// Servir archivos estáticos para que el frontend pueda escuchar los resultados
 app.use("/outputs", express.static(path.join(__dirname, "outputs")));
 
-// 4. CONEXIÓN DE RUTAS API
+// 3. Conexión de Rutas
 app.use("/api/spleeter", spleeterRoutes);
 app.use("/api/audio", audioRoutes);
-app.use('/api/transcribe', transcribeRoutes); // <--- ESTO ES LO QUE ARREGLA EL 404
+app.use("/api/transcribe", transcribeRoutes);
 app.use("/usuarios", usuariosRouter);
 
-// 5. DOCUMENTACIÓN SWAGGER
+// 4. Documentación Swagger
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// 6. RUTA DE SALUD (HEALTH CHECK)
+// 5. Ruta de salud (Health Check)
 app.get("/", (req, res) => {
-    res.json({
-        status: "Online",
-        message: "Backend Karaoke Pro - Spleeter Engine Activo",
-        services: {
-            spleeter: "Ready",
-            users: "Ready",
-            database: "Conectada",
-        },
-        docs: "/api-docs",
-    });
+  res.json({
+    status: "Online",
+    message: "Backend Karaoke Pro - Motor Activo",
+    services: {
+      spleeter: "Ready",
+      transcribe: "Ready",
+      users: "Ready",
+    },
+    docs: "/api-docs",
+  });
 });
 
-// 7. INICIO DE TAREAS PROGRAMADAS
-// Esto ejecutará node-cron para limpiar archivos temporales
+// 6. Iniciar tarea de limpieza de archivos temporales
 startCleanupTask();
 
-// 8. LANZAMIENTO DEL SERVIDOR (UNA SOLA VEZ)
+// 7. Lanzamiento del Servidor
 app.listen(PORT, () => {
-    console.log(`=========================================================`);
-    console.log(`🚀 Servidor Corriendo en: http://localhost:${PORT}`);
-    console.log(`📝 Documentación API:    http://localhost:${PORT}/api-docs`);
-    console.log(`🐍 Motor Spleeter:       Activo (Python 3.9)`);
-    console.log(`💾 Base de Datos:        Lista.`);
-    console.log(`=========================================================`);
+  console.log(`=========================================================`);
+  console.log(`🚀 Servidor Organizado: http://localhost:${PORT}`);
+  console.log(`📝 Documentación API:  http://localhost:${PORT}/api-docs`);
+  console.log(`🐍 Motor Spleeter: Activo (Python 3.9)`);
+  console.log(`💾 Base de Datos: Lista.`);
+  console.log(`=========================================================`);
 });
