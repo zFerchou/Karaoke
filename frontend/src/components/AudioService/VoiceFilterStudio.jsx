@@ -10,7 +10,7 @@ const BASE_SERVER_URL = "http://localhost:3000";
 const FILTER_OPTIONS = [
   { id: 'clean', label: 'Limpieza (Clean)', desc: 'Elimina ruido de fondo', color: '#3b82f6' },
   { id: 'vivid', label: 'Vívido', desc: 'Realza frecuencias altas', color: '#a855f7' },
-  { id: 'radio', label: 'Radio AM', desc: 'Efecto vintage/telefónico', color: '#f59e0b' },
+  { id: 'radio', label: 'Radio', desc: 'Efecto vintage/telefónico', color: '#f59e0b' },
   { id: 'norm', label: 'Normalizar', desc: 'Equilibra el volumen', color: '#22c55e' },
 ];
 
@@ -45,6 +45,11 @@ const VoiceFilterStudio = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const isValidType =
+        file.type.startsWith("audio/") || file.type === "video/mp4";
+      if (!isValidType) {
+        setError("Formato no soportado. Sube un audio o video MP4");
+      }
       setSelectedFile(file);
       setResultAudio(null);
       setResultText(null);
@@ -69,13 +74,10 @@ const VoiceFilterStudio = () => {
         // --- 1. MODO FILTROS ---
         data = await processAudio(selectedFile, selectedOption);
         if (data && data.downloadUrl) {
-          finalUrl = `${BASE_SERVER_URL}${data.downloadUrl}`;
-        } else if (data && data.filename) {
-          finalUrl = `${BASE_SERVER_URL}/api/audio/download/${data.filename}`;
+          setResultAudio(`${BASE_SERVER_URL}${data.downloadUrl}`);
         } else {
-            throw new Error("No se recibió URL de descarga.");
+          throw new Error("No se puede obtener la ruta de descarga.");
         }
-        setResultAudio(finalUrl);
 
       } else if (mode === 'spleeter') {
         // --- 2. MODO SPLEETER ---
@@ -168,7 +170,7 @@ const VoiceFilterStudio = () => {
                 type="file" 
                 ref={fileInputRef} 
                 onChange={handleFileChange} 
-                accept="audio/*" 
+                accept="audio/*,video/mp4" 
                 style={{ display: 'none' }} 
               />
               <div className="vfs-upload-content">

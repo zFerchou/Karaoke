@@ -9,7 +9,7 @@ exports.validarAudio = (filePath, callback) => {
     if (error) {
       return callback(
         false,
-        "Archivo corrupto o no es un formato de audio/video válido"
+        "Archivo corrupto o no es un formato de audio/video válido",
       );
     }
 
@@ -35,7 +35,7 @@ exports.validarAudio = (filePath, callback) => {
     if (Number.isNaN(duration)) {
       return callback(
         false,
-        "El archivo subido no es un audio o video válido (sin duración detectable)"
+        "El archivo subido no es un audio o video válido (sin duración detectable)",
       );
     }
 
@@ -51,6 +51,7 @@ exports.applyAudioFilter = (inputPath, outputPath, filterType, callback) => {
       "anequalizer=c0 f=100 w=100 g=-5|c0 f=5000 w=500 g=8, compand=attacks=0:points=-80/-80|-25/-10|-15/-6|0/-2, aexciter=level_in=1:level_out=0.8:amount=2, volume=1.3",
     radio:
       "highpass=f=400, lowpass=f=3500, extrastereo=m=0, acompressor=threshold=-15dB:ratio=6, aecho=0.8:0.88:10:0.5, volume=1.8",
+    norm: "loudnorm=I=-16:TP=-1.5:LRA=11:print_format=summary",
   };
 
   const args = [

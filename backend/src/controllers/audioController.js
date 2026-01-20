@@ -15,7 +15,7 @@ exports.uploadAndFilter = (req, res) => {
 
   filterType = filterType.toLowerCase().replaceAll(/[^a-z]/g, "");
 
-  const filtrosValidos = ["clean", "vivid", "radio","norm"];
+  const filtrosValidos = ["clean", "vivid", "radio", "norm"];
   if (!filtrosValidos.includes(filterType)) {
     if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
     return res.status(400).json({
@@ -25,9 +25,10 @@ exports.uploadAndFilter = (req, res) => {
   }
 
   const safeOriginalName = req.file.originalname
-    .normalize("NFD")
-    .replaceAll(/[\u0300-\u036f]/g, "")
-    .replaceAll(/[^a-z0-9.]/gi, "_")
+    .normalize("NFD") // Descompone caracteres (ó -> o + ´)
+    .replace(/[\u0300-\u036f]/g, "") // Quita los acentos
+    .replace(/[^a-zA-Z0-9.]/g, "_") // Todo lo que no sea letra/número a "_"
+    .replace(/_{2,}/g, "_") // Evita el doble guion bajo "__"
     .toLowerCase();
   const baseName = path.parse(safeOriginalName).name;
   const outputName = `filtered_${filterType}_${Date.now()}_${baseName}.mp3`;
