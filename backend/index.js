@@ -10,7 +10,7 @@ const swaggerSpec = require("./swagger");
 const spleeterRoutes = require("./src/routes/spleeterRoutes");
 const usuariosRouter = require("./src/routes/usuarios");
 const audioRoutes = require("./src/routes/audioRoutes");
-const transcribeRoutes = require('./routes/transcribeRoutes');
+const transcribeRoutes = require('./src/routes/transcribeRoutes');
 const { startCleanupTask } = require("./src/utils/cleanUpTask");
 
 const app = express();
