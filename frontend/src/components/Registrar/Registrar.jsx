@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './Registrar.css'; 
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Registrar.css"; // Usamos el CSS específico de registro
 
 const Registrar = () => {
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
-    nombre: '',
-    apellidos: '',
-    correo: '',
-    contrasena: ''
+    nombre: "",
+    apellidos: "",
+    correo: "",
+    contrasena: "",
   });
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false); // Para deshabilitar botón mientras carga
@@ -17,29 +17,37 @@ const Registrar = () => {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.id]: e.target.value
+      [e.target.id]: e.target.value,
     });
     // Limpiamos error apenas el usuario escribe de nuevo
     if (error) setError(null);
   };
 
+  // --- NUEVA FUNCIÓN DE VALIDACIÓN ---
   const validarFormulario = () => {
-    // Trim elimina espacios al inicio y final para verificar que no esté vacío "   "
-    if (!formData.nombre.trim() || !formData.apellidos.trim() || !formData.correo.trim() || !formData.contrasena) {
-      return "Por favor, completa todos los campos correctamente.";
+    // 1. Validar campos vacíos (aunque el HTML tiene 'required', esto es doble seguridad)
+    if (
+      !formData.nombre ||
+      !formData.apellidos ||
+      !formData.correo ||
+      !formData.contrasena
+    ) {
+      return "Por favor, completa todos los campos.";
     }
 
-    // Regex estándar para emails
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // 2. Validar Formato de Correo (Regex)
+    // Esto verifica que tenga texto + @ + texto + . + extensión (ej. .com, .mx)
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
     if (!emailRegex.test(formData.correo)) {
-      return "Introduce un correo electrónico válido.";
+      return "El formato del correo no es válido. (Ejemplo: usuario@dominio.com)";
     }
 
+    // 3. Validar Longitud de Contraseña
     if (formData.contrasena.length < 6) {
-      return "La contraseña es muy corta. Mínimo 6 caracteres.";
+      return "La contraseña es muy corta. Debe tener al menos 6 caracteres.";
     }
 
-    return null;
+    return null; // Si retorna null, es que todo está bien
   };
 
   const handleRegister = async (e) => {
@@ -52,101 +60,104 @@ const Registrar = () => {
 
     setLoading(true);
 
-    try {
-      // Limpiamos espacios extra antes de enviar
-      const datosEnvar = { 
-          nombre: formData.nombre.trim(),
-          apellidos: formData.apellidos.trim(),
-          correo: formData.correo.trim(),
-          contrasena: formData.contrasena, // La contraseña no se trimea usualmente (por si incluye espacios)
-          rol: 'usuario' 
-      };
+    // PASO 1: Ejecutamos las validaciones antes de contactar al servidor
+    const errorValidacion = validarFormulario();
+    if (errorValidacion) {
+      setError(errorValidacion);
+      return; // Detenemos la función aquí si hay errores
+    }
 
-      const response = await fetch('http://localhost:3000/usuarios', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+    try {
+      const datosEnvar = { ...formData, rol: "usuario" };
+
+      const response = await fetch("http://localhost:3000/usuarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(datosEnvar),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alert("¡Cuenta creada con éxito!");
-        navigate('/'); 
+        alert("¡Cuenta creada con éxito! Ahora inicia sesión.");
+        navigate("/");
       } else {
-        setError(data.message || "Error al registrarse.");
+        // Aquí capturamos si el backend dice que el correo ya existe
+        // (Asegúrate de que tu backend devuelva un mensaje claro si hay duplicados)
+        setError(
+          data.message || "Error al registrarse. Intente con otro correo.",
+        );
       }
     } catch (err) {
       console.error(err);
-      setError("No hay conexión con el servidor.");
-    } finally {
-        setLoading(false);
+      setError("No se pudo conectar con el servidor. Intente más tarde.");
     }
   };
 
   return (
+    // NOTA: Usamos las clases de Registrar.css (register-container, register-card, etc.)
     <div className="register-container">
       <div className="register-card">
         <h2 className="register-title">Crear Cuenta</h2>
-        
+
         <form onSubmit={handleRegister}>
           <div className="register-form-group">
             <label htmlFor="nombre">Nombre</label>
-            <input 
-              type="text" 
-              id="nombre" 
-              className="register-input" 
-              onChange={handleChange} 
-              required 
+            <input
+              type="text"
+              id="nombre"
+              className="register-input"
+              onChange={handleChange}
+              required
             />
           </div>
 
           <div className="register-form-group">
             <label htmlFor="apellidos">Apellidos</label>
-            <input 
-              type="text" 
-              id="apellidos" 
-              className="register-input" 
-              onChange={handleChange} 
-              required 
+            <input
+              type="text"
+              id="apellidos"
+              className="register-input"
+              onChange={handleChange}
+              required
             />
           </div>
 
           <div className="register-form-group">
             <label htmlFor="correo">Correo Electrónico</label>
-            <input 
-              type="email" 
-              id="correo" 
-              className="register-input" 
+            <input
+              type="email"
+              id="correo"
+              className="register-input"
               placeholder="nombre@ejemplo.com"
-              onChange={handleChange} 
-              required 
+              onChange={handleChange}
+              required
             />
           </div>
 
           <div className="register-form-group">
             <label htmlFor="contrasena">Contraseña</label>
-            <input 
-              type="password" 
-              id="contrasena" 
-              className="register-input" 
+            <input
+              type="password"
+              id="contrasena"
+              className="register-input"
               placeholder="Mínimo 6 caracteres"
-              onChange={handleChange} 
-              required 
-              minLength="6" // Validación nativa de HTML también ayuda
+              onChange={handleChange}
+              required
             />
           </div>
 
-          {error && <p className="error-message" style={{color: 'red', fontSize: '0.9rem'}}>{error}</p>}
+          {/* Mensaje de error visible */}
+          {error && <p className="error-message">{error}</p>}
 
-          <button type="submit" className="btn-submit-register" disabled={loading}>
-            {loading ? "Registrando..." : "Registrarse"}
+          <button type="submit" className="btn-submit-register">
+            Registrarse
           </button>
 
-          <button 
-            type="button" 
-            className="btn-back-login" 
-            onClick={() => navigate('/')}
+          <button
+            type="button"
+            className="btn-back-login"
+            onClick={() => navigate("/")}
           >
             Volver al Login
           </button>
@@ -155,5 +166,4 @@ const Registrar = () => {
     </div>
   );
 };
-
 export default Registrar;
