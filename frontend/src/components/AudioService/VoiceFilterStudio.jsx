@@ -12,6 +12,13 @@ const FILTER_OPTIONS = [
   { id: 'norm', label: 'Normalizar', desc: 'Equilibra el volumen', color: '#22c55e' },
 ];
 
+const QUALITY_OPTIONS = [
+  {label: 'Estándar (MP3 - 192K)', format: 'mp3', bitrate: '192k'},
+  {label: 'Alta Calidad (MP3 - 320k)', format: 'mp3', bitrate: '320k'},
+  {label: 'Sin Pérdida (FLAC)', format: 'flac', bitrate: 'lossless'},
+  {label: 'Sin Pérdida (WAV)', format: 'wav', bitrate: 'none'}
+];
+
 const SPLEETER_OPTIONS = [
   { id: 'vocals', label: 'Extraer Voz', desc: 'Separa solo la voz (Acapella)', color: '#ef4444' },
   { id: 'accompaniment', label: 'Karaoke (Pista)', desc: 'Elimina la voz, deja la música', color: '#06b6d4' },
@@ -24,6 +31,7 @@ const TRANSCRIBE_OPTIONS = [
 const VoiceFilterStudio = () => {
   const [mode, setMode] = useState('filter'); 
   const [selectedOption, setSelectedOption] = useState('clean');
+  const [selectedQuality, setSelectedQuality] = useState(QUALITY_OPTIONS[0]);
   
   // Estado de archivos independiente por modo
   const [files, setFiles] = useState({
@@ -79,7 +87,12 @@ const VoiceFilterStudio = () => {
       let finalUrl = null;
 
       if (mode === 'filter') {
-        data = await processAudio(currentFile, selectedOption);
+        data = await processAudio(
+          currentFile,
+          selectedOption,
+          selectedQuality.format,
+          selectedQuality.bitrate,
+        );
         if (data?.downloadUrl) finalUrl = `${BASE_SERVER_URL}${data.downloadUrl}`;
         else if (data?.filename) finalUrl = `${BASE_SERVER_URL}/api/audio/download/${data.filename}`;
         
@@ -115,28 +128,37 @@ const VoiceFilterStudio = () => {
   return (
     <div className="vfs-container">
       <div className="vfs-card">
-        
         <div className="vfs-header">
           <h1 className="vfs-title">
-            {mode === 'filter' && <Mic size={32} />}
-            {mode === 'spleeter' && <Layers size={32} />}
-            {mode === 'transcribe' && <FileText size={32} />}
+            {mode === "filter" && <Mic size={32} />}
+            {mode === "spleeter" && <Layers size={32} />}
+            {mode === "transcribe" && <FileText size={32} />}
             Estudio de Audio IA
           </h1>
           <p className="vfs-subtitle">
-            {mode === 'filter' && 'Aplica filtros profesionales a tu voz.'}
-            {mode === 'spleeter' && 'Separa la voz de la música.'}
-            {mode === 'transcribe' && 'Obtén la letra de tus canciones automáticamente.'}
+            {mode === "filter" && "Aplica filtros profesionales a tu voz."}
+            {mode === "spleeter" && "Separa la voz de la música."}
+            {mode === "transcribe" &&
+              "Obtén la letra de tus canciones automáticamente."}
           </p>
-          
+
           <div className="vfs-tabs">
-            <button className={`vfs-tab-btn ${mode === 'filter' ? 'active' : ''}`} onClick={() => handleTabChange('filter')}>
+            <button
+              className={`vfs-tab-btn ${mode === "filter" ? "active" : ""}`}
+              onClick={() => handleTabChange("filter")}
+            >
               <AudioWaveform size={18} /> Filtros
             </button>
-            <button className={`vfs-tab-btn ${mode === 'spleeter' ? 'active' : ''}`} onClick={() => handleTabChange('spleeter')}>
+            <button
+              className={`vfs-tab-btn ${mode === "spleeter" ? "active" : ""}`}
+              onClick={() => handleTabChange("spleeter")}
+            >
               <Layers size={18} /> Separador
             </button>
-            <button className={`vfs-tab-btn ${mode === 'transcribe' ? 'active' : ''}`} onClick={() => handleTabChange('transcribe')}>
+            <button
+              className={`vfs-tab-btn ${mode === "transcribe" ? "active" : ""}`}
+              onClick={() => handleTabChange("transcribe")}
+            >
               <AlignLeft size={18} /> Letra
             </button>
           </div>
@@ -144,44 +166,94 @@ const VoiceFilterStudio = () => {
 
         <div className="vfs-content">
           <div className="vfs-controls">
-            <div className={`vfs-upload-area ${currentFile ? 'active' : ''}`} onClick={() => fileInputRef.current.click()}>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                accept="audio/*,video/mp4" 
-                style={{ display: 'none' }} 
+            <div
+              className={`vfs-upload-area ${currentFile ? "active" : ""}`}
+              onClick={() => fileInputRef.current.click()}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="audio/*,video/mp4"
+                style={{ display: "none" }}
               />
               <div className="vfs-upload-content">
                 {currentFile ? (
                   <>
                     <Music size={40} color="#a78bfa" />
-                    <span style={{ fontWeight: '500', color: '#ddd', fontSize: '0.9rem' }}>{currentFile.name}</span>
+                    <span
+                      style={{
+                        fontWeight: "500",
+                        color: "#ddd",
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      {currentFile.name}
+                    </span>
                   </>
                 ) : (
                   <>
                     <Upload size={40} color="#64748b" />
-                    <span style={{ color: '#94a3b8' }}>Subir audio para {mode}</span>
+                    <span style={{ color: "#94a3b8" }}>
+                      Subir audio para {mode}
+                    </span>
                   </>
                 )}
               </div>
             </div>
 
             <div className="vfs-filter-list">
-                {currentOptions.map(opt => (
-                    <button key={opt.id} onClick={() => setSelectedOption(opt.id)} className={`vfs-filter-btn ${selectedOption === opt.id ? 'selected' : ''}`}>
-                        <div className="filter-dot" style={{ backgroundColor: opt.color }}></div>
-                        <div style={{ textAlign: 'left' }}>
-                          <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{opt.label}</div>
-                          <div style={{ fontSize: '0.75rem', opacity: 0.7 }}>{opt.desc}</div>
-                        </div>
-                    </button>
-                ))}
+              {currentOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => setSelectedOption(opt.id)}
+                  className={`vfs-filter-btn ${selectedOption === opt.id ? "selected" : ""}`}
+                >
+                  <div
+                    className="filter-dot"
+                    style={{ backgroundColor: opt.color }}
+                  ></div>
+                  <div style={{ textAlign: "left" }}>
+                    <div style={{ fontWeight: "bold", fontSize: "0.9rem" }}>
+                      {opt.label}
+                    </div>
+                    <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>
+                      {opt.desc}
+                    </div>
+                  </div>
+                </button>
+              ))}
             </div>
 
-            <button onClick={handleSubmit} disabled={!currentFile || isProcessing} className="vfs-action-btn">
-              {isProcessing ? <Loader2 className="animate-spin" /> : <Wand2 />} 
-              {isProcessing ? 'Procesando...' : `Procesar ${mode}`}
+            {mode === "filter" && (
+              <div
+                className="vfs-quality-selector"
+                style={{ marginTop: "20px" }}
+              >
+                <label className="vfs-filter-label">
+                  Calidad de Exportación
+                </label>
+                <div className="vfs-quality-grid">
+                  {QUALITY_OPTIONS.map((q, index) => (
+                    <button
+                      key={index}
+                      className={`vfs-quality-chip ${selectedQuality.label === q.label ? "active" : ""}`}
+                      onClick={() => setSelectedQuality(q)}
+                    >
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={handleSubmit}
+              disabled={!currentFile || isProcessing}
+              className="vfs-action-btn"
+            >
+              {isProcessing ? <Loader2 className="animate-spin" /> : <Wand2 />}
+              {isProcessing ? "Procesando..." : `Procesar ${mode}`}
             </button>
             {error && <div className="vfs-error">{error}</div>}
           </div>
@@ -192,40 +264,56 @@ const VoiceFilterStudio = () => {
                 <Play size={48} />
                 <p>El resultado aparecerá aquí</p>
               </div>
+            ) : currentResult.type === "audio" ? (
+              <div className="vfs-success">
+                <Music size={56} color="#4ade80" />
+                <audio
+                  controls
+                  src={currentResult.url}
+                  className="vfs-audio-player"
+                  key={currentResult.url}
+                />
+                <a
+                  href={currentResult.url}
+                  download
+                  className="vfs-download-btn"
+                >
+                  <Download size={20} /> Descargar
+                </a>
+              </div>
             ) : (
-              currentResult.type === 'audio' ? (
-                <div className="vfs-success">
-                  <Music size={56} color="#4ade80" />
-                  <audio controls src={currentResult.url} className="vfs-audio-player" key={currentResult.url} />
-                  <a href={currentResult.url} download className="vfs-download-btn">
-                    <Download size={20}/> Descargar
-                  </a>
+              <div className="vfs-success" style={{ width: "100%" }}>
+                <FileText size={32} color="#10b981" />
+                <div
+                  className="text-scroll-area"
+                  style={{
+                    whiteSpace: "pre-wrap",
+                    textAlign: "left",
+                    background: "#0f172a",
+                    padding: "20px",
+                    borderRadius: "8px",
+                    marginTop: "15px",
+                    maxHeight: "300px",
+                    overflowY: "auto",
+                    border: "1px solid #334155",
+                  }}
+                >
+                  {currentResult.content}
                 </div>
-              ) : (
-                <div className="vfs-success" style={{ width: '100%' }}>
-                  <FileText size={32} color="#10b981" />
-                  <div className="text-scroll-area" style={{ 
-                    whiteSpace: 'pre-wrap', 
-                    textAlign: 'left', 
-                    background: '#0f172a', 
-                    padding: '20px', 
-                    borderRadius: '8px', 
-                    marginTop: '15px',
-                    maxHeight: '300px',
-                    overflowY: 'auto',
-                    border: '1px solid #334155'
-                  }}>
-                    {currentResult.content}
-                  </div>
-                  <button 
-                    onClick={() => navigator.clipboard.writeText(currentResult.content)}
-                    className="vfs-download-btn" 
-                    style={{ marginTop: '10px', width: '100%', cursor: 'pointer' }}
-                  >
-                    Copiar Letra
-                  </button>
-                </div>
-              )
+                <button
+                  onClick={() =>
+                    navigator.clipboard.writeText(currentResult.content)
+                  }
+                  className="vfs-download-btn"
+                  style={{
+                    marginTop: "10px",
+                    width: "100%",
+                    cursor: "pointer",
+                  }}
+                >
+                  Copiar Letra
+                </button>
+              </div>
             )}
           </div>
         </div>
