@@ -15,6 +15,9 @@ exports.uploadAndFilter = (req, res) => {
 
   filterType = filterType.toLowerCase().replaceAll(/[^a-z]/g, "");
 
+  const format = (req.body.format || "mp3").toLowerCase();
+  const quality = req.body.quality || "192k";
+
   const filtrosValidos = ["clean", "vivid", "radio", "norm"];
   if (!filtrosValidos.includes(filterType)) {
     if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
@@ -31,7 +34,7 @@ exports.uploadAndFilter = (req, res) => {
     .replace(/_{2,}/g, "_") // Evita el doble guion bajo "__"
     .toLowerCase();
   const baseName = path.parse(safeOriginalName).name;
-  const outputName = `filtered_${filterType}_${Date.now()}_${baseName}.mp3`;
+  const outputName = `filtered_${filterType}_${Date.now()}_${baseName}.${format}`;
   const outputPath = path.join(
     __dirname,
     "../../outputs/voice_filters",
@@ -60,6 +63,8 @@ exports.uploadAndFilter = (req, res) => {
       inputPath,
       outputPath,
       filterType,
+      format,
+      quality,
       (success) => {
         if (fs.existsSync(inputPath)) {
           fs.unlinkSync(inputPath);
@@ -78,7 +83,7 @@ exports.uploadAndFilter = (req, res) => {
           downloadUrl: `/api/audio/download/${outputName}`,
           formatInfo: {
             inputOriginal: req.file.originalname,
-            outputFormat: "mp3",
+            outputFormat: format,
             duration: `${duration.toFixed(2)}s`,
             filterType: filterType,
           },
