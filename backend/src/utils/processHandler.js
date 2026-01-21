@@ -27,8 +27,8 @@ exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
     // --- ESTABILIZADORES Y ACELERADORES ---
     CUDA_VISIBLE_DEVICES: "-1", // Obliga a usar CPU (la GPU mal configurada crashea VS Code)
     TF_CPP_MIN_LOG_LEVEL: "3",
-    OMP_NUM_THREADS: "2", // Usa 2 hilos para buen balance RAM/velocidad
-    MKL_NUM_THREADS: "1",
+    OMP_NUM_THREADS: "1", // Limita a UN solo hilo. Es más lento, pero no satura la RAM
+    MKL_NUM_THREADS: "1", // Evita que las librerías matemáticas disparen el consumo
     TF_NUM_INTRAOP_THREADS: "1",
     TF_NUM_INTEROP_THREADS: "1",
     PYTHONMALLOC: "malloc",

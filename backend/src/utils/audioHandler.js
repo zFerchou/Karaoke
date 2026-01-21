@@ -43,7 +43,14 @@ exports.validarAudio = (filePath, callback) => {
   });
 };
 
-exports.applyAudioFilter = (inputPath, outputPath, filterType, callback) => {
+exports.applyAudioFilter = (
+  inputPath,
+  outputPath,
+  filterType,
+  format,
+  bitrate,
+  callback,
+) => {
   const filterMap = {
     clean:
       "afftdn=nr=18:nf=-20, highpass=f=100, lowpass=f=15000, agate=threshold=-28dB:ratio=2.5, treble=g=4:f=6000",
@@ -62,16 +69,17 @@ exports.applyAudioFilter = (inputPath, outputPath, filterType, callback) => {
     inputPath,
     "-af",
     filterMap[filterType] || "anull",
-    "-c:a",
-    "libmp3lame",
-    "-b:a",
-    "192k",
-    "-ac",
-    "2",
-    "-ar",
-    "44100",
-    outputPath,
   ];
+
+  if (format === "wav") {
+    args.push("-c:a", "pcm_s16le");
+  } else if (format === "flac") {
+    args.push("-c:a", "flac");
+  } else {
+    args.push("-c:a", "libmp3lame", "-b:a", bitrate || "192k");
+  }
+
+  args.push(outputPath);
 
   const ffmpeg = spawn("ffmpeg", args);
 
