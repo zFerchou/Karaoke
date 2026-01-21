@@ -65,6 +65,8 @@ const upload = multer({ storage });
  *       500:
  *         description: "Error interno del motor de transcripción"
  */
-router.post("/whisper", upload.single("audio"), transcribeController.transcribeAudio);
-
+router.post("/whisper", upload.single("audio"), (req, res, next) => {
+    console.log("--> ¡Petición recibida en /whisper!");
+    next();
+}, transcribeController.transcribeAudio);
 module.exports = router;

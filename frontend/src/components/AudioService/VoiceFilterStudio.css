@@ -1,0 +1,272 @@
+/* Variables de colores para cambiar fácil */
+:root {
+  --bg-card: #1e293b;       /* Fondo tarjeta */
+  --primary: #7c3aed;       /* Violeta principal */
+  --primary-hover: #6d28d9;
+  --text-main: #ffffff;
+  --text-dim: #94a3b8;
+  --border: #334155;
+}
+
+/* --- Layout Principal --- */
+.vfs-container {
+  min-height: 100vh;
+  background-color: var(--bg-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--text-main);
+}
+
+.vfs-card {
+  background-color: var(--bg-card);
+  width: 100%;
+  max-width: 900px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+}
+
+/* --- Header --- */
+.vfs-header {
+  background: linear-gradient(90deg, #7c3aed, #4f46e5);
+  padding: 24px;
+}
+
+.vfs-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+
+.vfs-subtitle {
+  margin-top: 8px;
+  opacity: 0.9;
+  font-size: 0.95rem;
+}
+
+/* --- Contenido (Grid) --- */
+.vfs-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Dos columnas */
+  gap: 32px;
+  padding: 32px;
+}
+
+/* Responsivo para móviles */
+@media (max-width: 768px) {
+  .vfs-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Sección Izquierda: Controles --- */
+.vfs-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Upload Area */
+.vfs-upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.vfs-upload-area:hover {
+  border-color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.vfs-upload-area.active {
+  border-color: var(--primary);
+  background: rgba(124, 58, 237, 0.1);
+}
+
+.vfs-upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Lista de Filtros */
+.vfs-filter-label {
+  display: block;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+.vfs-filter-list {
+  display: grid;
+  gap: 12px;
+}
+
+.vfs-filter-btn {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.vfs-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.vfs-filter-btn.selected {
+  border-color: var(--primary);
+  background: rgba(124, 58, 237, 0.15);
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.2);
+}
+
+.filter-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 16px;
+}
+
+/* Botón Principal */
+.vfs-action-btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--primary);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform 0.1s;
+}
+
+.vfs-action-btn:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+  transform: scale(1.02);
+}
+
+.vfs-action-btn:disabled {
+  background-color: var(--border);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Mensaje de Error */
+.vfs-error {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+  padding: 12px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* --- Sección Derecha: Resultados --- */
+.vfs-result-area {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.vfs-placeholder {
+  text-align: center;
+  opacity: 0.5;
+  color: var(--text-dim);
+}
+
+.vfs-success {
+  text-align: center;
+  width: 100%;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.vfs-audio-player {
+  width: 100%;
+  margin: 20px 0;
+  outline: none;
+}
+
+.vfs-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #334155;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.vfs-download-btn:hover {
+  background-color: #475569;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+/* --- TABS (Pestañas) --- */
+.vfs-tabs {
+  display: flex;
+  gap: 10px;
+  padding: 0 24px;
+  background: rgba(0,0,0,0.2);
+  border-bottom: 1px solid var(--border);
+}
+
+.vfs-tab-btn {
+  padding: 16px 24px;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.vfs-tab-btn:hover {
+  color: white;
+  background: rgba(255,255,255,0.02);
+}
+
+.vfs-tab-btn.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
