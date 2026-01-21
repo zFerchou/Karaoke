@@ -1,7 +1,7 @@
 /* Variables de colores para cambiar fácil */
 :root {
-  --bg-card: #1e293b;       /* Fondo tarjeta */
-  --primary: #7c3aed;       /* Violeta principal */
+  --bg-card: #1e293b; /* Fondo tarjeta */
+  --primary: #7c3aed; /* Violeta principal */
   --primary-hover: #6d28d9;
   --text-main: #ffffff;
   --text-dim: #94a3b8;
@@ -16,7 +16,10 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   color: var(--text-main);
 }
 
@@ -235,15 +238,21 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 /* --- TABS (Pestañas) --- */
 .vfs-tabs {
   display: flex;
   gap: 10px;
   padding: 0 24px;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid var(--border);
 }
 
@@ -263,10 +272,41 @@
 
 .vfs-tab-btn:hover {
   color: white;
-  background: rgba(255,255,255,0.02);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .vfs-tab-btn.active {
   color: var(--primary);
   border-bottom-color: var(--primary);
+}
+
+.vfs-quality-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.vfs-quality-chip {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.vfs-quality-chip:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.vfs-quality-chip.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
 }

@@ -24,7 +24,7 @@ const upload = multer({ storage });
  * @swagger
  * /api/audio/upload-filter:
  *   post:
- *     summary: Aplicar filtros de voz a un archivo de audio
+ *     summary: Aplicar filtros de voz y elegir formato/calidad
  *     tags:
  *       - Filtros para la voz
  *     requestBody:
@@ -40,23 +40,62 @@ const upload = multer({ storage });
  *                 type: string
  *                 format: binary
  *                 description: Archivo de audio a procesar
+ *
  *               filterType:
  *                 type: string
- *                 description: Tipo de filtro de voz a aplicar
- *                 enum:
- *                   - clean
- *                   - vivid
- *                   - radio
- *                   - norm
+ *                 enum: [clean, vivid, radio, norm]
  *                 default: clean
+ *
+ *               format:
+ *                 type: string
+ *                 enum: [mp3, wav, flac]
+ *                 default: mp3
+ *
+ *               quality:
+ *                 type: string
+ *                 enum: [128k, 192k, 320k]
+ *                 description: Solo aplica para formato mp3
+ *                 default: 192k
+ *
  *     responses:
  *       200:
- *         description: Audio procesado con éxito
+ *         description: Audio procesado correctamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: Success
+ *                 message:
+ *                   type: string
+ *                   example: Audio procesado correctamente
+ *                 previewUrl:
+ *                   type: string
+ *                   example: /outputs/voice_filters/filtered_clean_123.mp3
+ *                 downloadUrl:
+ *                   type: string
+ *                   example: /api/audio/download/filtered_clean_123.mp3
+ *                 formatInfo:
+ *                   type: object
+ *                   properties:
+ *                     inputOriginal:
+ *                       type: string
+ *                     outputFormat:
+ *                       type: string
+ *                     duration:
+ *                       type: string
+ *                     filterType:
+ *                       type: string
+ *
  *       400:
- *         description: Error en la validación del archivo
+ *         description: Error de validación (archivo, filtro o duración)
+ *
  *       500:
- *         description: Error interno en el motor de procesamiento
+ *         description: Error interno al procesar el audio
  */
+
 router.post(
   "/upload-filter",
   upload.single("audio"),

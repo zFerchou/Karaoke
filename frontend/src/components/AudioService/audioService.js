@@ -4,10 +4,12 @@ import axios from 'axios';
 const BASE_URL = 'http://localhost:3000/api';
 
 // --- FUNCIONES DE FILTROS DE VOZ ---
-export const processAudio = async (file, filterType) => {
+export const processAudio = async (file, filterType, format = 'mp3', quality = '192k') => {
   const formData = new FormData();
   formData.append('audio', file);
   formData.append('filterType', filterType);
+  formData.append('format', format);
+  formData.append('quality', quality)
 
   try {
     const response = await axios.post(`${BASE_URL}/audio/upload-filter`, formData, {
