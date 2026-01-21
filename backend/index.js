@@ -12,7 +12,6 @@ const swaggerSpec = require("./swagger");
 const spleeterRoutes = require("./src/routes/spleeterRoutes");
 const audioRoutes = require("./src/routes/audioRoutes");
 const transcribeRoutes = require('./src/routes/transcribeRoutes');
-const transcribeRoutes = require("./src/routes/transcribeRoutes");
 const usuariosRouter = require("./src/routes/usuarios");
 
 // Utilidades
