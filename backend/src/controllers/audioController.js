@@ -53,6 +53,9 @@ exports.uploadAndFilter = (req, res) => {
       });
     }
 
+    const outputFolder = path.join(__dirname, "../../outputs/voice_filters");
+    cleanFolderSync(outputFolder);
+
     audioHandler.applyAudioFilter(
       inputPath,
       outputPath,
@@ -109,4 +112,19 @@ exports.downloadFile = (req, res) => {
   return res
     .status(404)
     .json({ error: "El archivo solicitado ya no existe en el servidor." });
+};
+
+const cleanFolderSync = (folderPath) => {
+  try {
+    if (fs.existsSync(folderPath)) {
+      const files = fs.readdirSync(folderPath);
+      for (const file of files) {
+        // Borramos todos los archivos existentes en la carpeta
+        fs.unlinkSync(path.join(folderPath, file));
+      }
+      console.log("🧹 Carpeta purgada: Solo se mantendrá el nuevo audio.");
+    }
+  } catch (err) {
+    console.error("❌ Error al limpiar carpeta previa:", err);
+  }
 };
