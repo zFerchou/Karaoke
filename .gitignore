@@ -3,7 +3,7 @@ backend/node_modules/
 backend/venv/
 backend/uploads/
 backend/outputs/
-
+backend/video_plantilla/fondo2.mp4
 # --- Dependencias y Entornos (Global) ---
 node_modules/
 venv/
