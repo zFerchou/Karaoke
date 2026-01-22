@@ -48,7 +48,6 @@ Style: KaraokeStyle,Arial,65,&H0000FFFF,&H00AAAAAA,&H00000000,&H80000000,-1,0,0,
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
 
-  // Usamos un bucle for tradicional para poder acceder al índice i+1 (siguiente segmento)
   let events = "";
 
   for (let i = 0; i < segments.length; i++) {
@@ -79,7 +78,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
     let karaokeLine = "";
     
-    // --- LÓGICA DE RELLENO DE PALABRAS ---
+    // --- LÓGICA DE RELLENO DE PALABRAS (LEGATO) ---
     seg.words.forEach((word, index) => {
       const cleanWord = word.word.trim();
       if (!cleanWord) return;
@@ -100,10 +99,6 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
       // Duración en Centésimas para el efecto \K
       const durationSec = currentEnd - currentStart;
       let durationCs = Math.floor(durationSec * 100);
-
-      // CORRECCIÓN FINAL: Si la suma de las duraciones \K se pasa del tiempo total de la línea,
-      // el ASS se rompe. Ajustamos ligeramente si es necesario, pero generalmente
-      // Whisper es consistente.
       
       const space = (index > 0) ? " " : "";
       karaokeLine += `${space}{\\K${durationCs}}${cleanWord}`;
@@ -116,7 +111,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 };
 
 /**
- * Obtiene duración del audio
+ * Obtiene duración del audio (útil para logs o futuros usos)
  */
 const getAudioDuration = (audioPath) => {
   try {
@@ -129,31 +124,40 @@ exports.generateLyricVideo = (audioPath, jsonPath, outputDir, callback) => {
   try {
     const templatePath = getTemplateVideoPath();
     const outputVideoPath = path.join(outputDir, "video_lyrics.mp4");
-    const duration = getAudioDuration(audioPath);
-
+    
+    // 1. Generar Subtítulos
     const assPath = path.join(outputDir, "subtitles.ass");
     createAssFile(jsonPath, assPath);
 
+    // 2. Rutas para Windows
     let assPathFormatted = assPath.split(path.sep).join("/");
     if (process.platform === "win32") {
       assPathFormatted = assPathFormatted.replace(":", "\\:");
     }
 
-    let videoFilters = `subtitles='${assPathFormatted}'`;
+    // 3. Filtros: SOLO SUBTÍTULOS (Sin barra amarilla)
+    const videoFilters = `subtitles='${assPathFormatted}'`;
     
     const args = [
-      "-stream_loop", "-1",
-      "-i", templatePath,
-      "-i", audioPath,
-      "-vf", videoFilters,
+      "-stream_loop", "-1",       // Loop infinito al video
+      "-i", templatePath,         // Input Video
+      "-i", audioPath,            // Input Audio
+      "-vf", videoFilters,        // Filtro Subtítulos
       "-map", "0:v", "-map", "1:a",
-      "-c:v", "libx264", "-preset", "ultrafast",
-      "-c:a", "aac", "-b:a", "192k",
-      "-shortest", "-y",
+      
+      // --- SECCIÓN DE OPTIMIZACIÓN (Reduce peso drásticamente) ---
+      "-c:v", "libx264",          // Codec de video eficiente
+      "-preset", "medium",        // Compresión balanceada (antes era ultrafast=pesado)
+      "-crf", "23",               // Calidad constante (valor estándar bueno)
+      "-pix_fmt", "yuv420p",      // Formato de pixel compatible y ligero
+      "-movflags", "+faststart",  // Optimización para web/streaming
+
+      "-c:a", "aac", "-b:a", "192k", // Audio AAC
+      "-shortest", "-y",          // Cortar al final del audio y sobreescribir
       outputVideoPath
     ];
 
-    console.log(`--> Renderizando Video (Modo Preciso Sin Solapamiento)...`);
+    console.log(`--> Renderizando Video Optimizado (H.264 Medium CRF 23)...`);
     
     const ffmpeg = spawn("ffmpeg", args);
     let stderrLog = "";
