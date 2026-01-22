@@ -17,24 +17,30 @@ const getTemplateVideoPath = () => {
 };
 
 /**
- * Formateador de tiempo ASS de Alta Precisión
+ * Formateador de tiempo ASS de Alta Precisión (Math-based)
+ * Evita errores de milisegundos de Date()
+ * Salida: H:MM:SS.cc (Centésimas)
  */
 const formatTimeASS = (seconds) => {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
-  const cs = Math.floor((seconds % 1) * 100); 
+  const cs = Math.floor((seconds % 1) * 100); // Centésimas
   return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${cs.toString().padStart(2, '0')}`;
 };
 
 /**
- * Genera el archivo .ASS con SINCRONIZACIÓN PERFECTA (Sin superposición)
+ * Genera el archivo .ASS con lógica "LEGATO" (Fluidez Continua)
  */
 const createAssFile = (jsonPath, outputAssPath) => {
   const rawData = fs.readFileSync(jsonPath, "utf8");
   const data = JSON.parse(rawData);
   const segments = data.segments || [];
 
+  // Configuración de Estilo Karaoke Profesional
+  // PrimaryColour: &H0000FFFF (Amarillo)
+  // SecondaryColour: &H00AAAAAA (Gris)
+  // MarginV=60: Altura desde el fondo
   const header = `[Script Info]
 ScriptType: v4.00+
 PlayResX: 1920
@@ -48,70 +54,67 @@ Style: KaraokeStyle,Arial,65,&H0000FFFF,&H00AAAAAA,&H00000000,&H80000000,-1,0,0,
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 `;
 
-  let events = "";
+  const events = segments.map(seg => {
+    if (!seg.words || seg.words.length === 0) return ""; // Saltar si no hay datos precisos
 
-  for (let i = 0; i < segments.length; i++) {
-    const seg = segments[i];
-    const nextSeg = segments[i + 1]; // Miramos el futuro
-
-    if (!seg.words || seg.words.length === 0) continue;
-
-    // TIEMPO DE INICIO: Exacto a la primera palabra
-    const lineStart = seg.words[0].start;
-
-    // CÁLCULO INTELIGENTE DEL FINAL DE LÍNEA
-    // Meta: Evitar que se empalmen visualmente.
+    // LINGER TIME: Tiempo extra que se queda el subtítulo al final (0.3s)
+    // Esto evita que la letra desaparezca de golpe mientras el cantante termina la nota.
+    const EXTRA_END_TIME = 0.3; 
     
-    // 1. Final natural (última palabra + un pequeño margen visual)
-    let naturalEnd = seg.words[seg.words.length - 1].end + 0.3; 
+    const lineStart = seg.words[0].start;
+    // El final de la línea visual es el final real + el tiempo extra
+    const lineEnd = seg.words[seg.words.length - 1].end + EXTRA_END_TIME;
 
-    // 2. ¿Cuándo empieza la SIGUIENTE frase?
-    const nextStart = nextSeg ? nextSeg.words?.[0]?.start || nextSeg.start : 999999;
-
-    // 3. REGLA DE ORO: El final actual NUNCA puede pasar el inicio del siguiente.
-    // Usamos Math.min para cortar el subtítulo si el siguiente entra rápido.
-    const lineEnd = Math.min(naturalEnd, nextStart);
-
-    // Formatear a ASS
     const startAss = formatTimeASS(lineStart);
     const endAss = formatTimeASS(lineEnd);
 
     let karaokeLine = "";
     
-    // --- LÓGICA DE RELLENO DE PALABRAS (LEGATO) ---
+    // --- LÓGICA DE SINCRONIZACIÓN "LEGATO" ---
+    // En lugar de usar word.end, extendemos la duración de la palabra actual
+    // hasta el inicio de la siguiente. Esto cubre los huecos y silencios
+    // haciendo que el color se llene suavemente durante la nota sostenida.
+    
     seg.words.forEach((word, index) => {
       const cleanWord = word.word.trim();
       if (!cleanWord) return;
 
       const nextWord = seg.words[index + 1];
+      
+      // Inicio real de esta palabra
       const currentStart = word.start;
       
-      // Calculamos el final de la palabra actual
-      // Si hay siguiente palabra en la misma frase, llenamos el hueco hasta ella (Legato)
-      // Si es la última palabra, usamos el final real de la palabra
+      // Final calculado:
+      // Si hay siguiente palabra, nuestro final es SU inicio (rellenamos el hueco).
+      // Si es la última palabra, usamos su final real.
       let currentEnd = nextWord ? nextWord.start : word.end;
 
-      // Protección contra silencios largos dentro de la misma frase (> 1.5s)
-      if (nextWord && (nextWord.start - word.end > 1.5)) {
-        currentEnd = word.end;
+      // Si el hueco con la siguiente palabra es GIGANTE (> 1s), respetamos el silencio.
+      // Si es pequeño (respiración), lo puenteamos para fluidez.
+      if (nextWord && (nextWord.start - word.end > 1.0)) {
+        currentEnd = word.end; // Cortar, es un silencio largo instrumental
       }
 
-      // Duración en Centésimas para el efecto \K
+      // Duración en Centésimas (ASS usa centésimas para \K)
       const durationSec = currentEnd - currentStart;
-      let durationCs = Math.floor(durationSec * 100);
-      
+      const durationCs = Math.floor(durationSec * 100);
+
+      // Agregamos espacio previo si es necesario (Whisper suele pegar las palabras)
+      // Solo agregamos espacio visual, no de tiempo \K, para no desfasar.
       const space = (index > 0) ? " " : "";
+
+      // Construcción del tag: { \K80 } Palabrabra
       karaokeLine += `${space}{\\K${durationCs}}${cleanWord}`;
     });
 
-    events += `Dialogue: 0,${startAss},${endAss},KaraokeStyle,,0,0,0,,${karaokeLine}\n`;
-  }
+    return `Dialogue: 0,${startAss},${endAss},KaraokeStyle,,0,0,0,,${karaokeLine}`;
+  }).join("\n");
 
   fs.writeFileSync(outputAssPath, header + events, "utf8");
 };
 
 /**
- * Obtiene duración del audio (útil para logs o futuros usos)
+ * Obtiene duración del audio para la barra de progreso
  */
 const getAudioDuration = (audioPath) => {
   try {
@@ -124,8 +127,9 @@ exports.generateLyricVideo = (audioPath, jsonPath, outputDir, callback) => {
   try {
     const templatePath = getTemplateVideoPath();
     const outputVideoPath = path.join(outputDir, "video_lyrics.mp4");
-    
-    // 1. Generar Subtítulos
+    const duration = getAudioDuration(audioPath);
+
+    // 1. Generar el ASS con la nueva lógica Legato
     const assPath = path.join(outputDir, "subtitles.ass");
     createAssFile(jsonPath, assPath);
 
@@ -135,29 +139,25 @@ exports.generateLyricVideo = (audioPath, jsonPath, outputDir, callback) => {
       assPathFormatted = assPathFormatted.replace(":", "\\:");
     }
 
-    // 3. Filtros: SOLO SUBTÍTULOS (Sin barra amarilla)
-    const videoFilters = `subtitles='${assPathFormatted}'`;
-    
-    const args = [
-      "-stream_loop", "-1",       // Loop infinito al video
-      "-i", templatePath,         // Input Video
-      "-i", audioPath,            // Input Audio
-      "-vf", videoFilters,        // Filtro Subtítulos
-      "-map", "0:v", "-map", "1:a",
-      
-      // --- SECCIÓN DE OPTIMIZACIÓN (Reduce peso drásticamente) ---
-      "-c:v", "libx264",          // Codec de video eficiente
-      "-preset", "medium",        // Compresión balanceada (antes era ultrafast=pesado)
-      "-crf", "23",               // Calidad constante (valor estándar bueno)
-      "-pix_fmt", "yuv420p",      // Formato de pixel compatible y ligero
-      "-movflags", "+faststart",  // Optimización para web/streaming
+    // 3. Filtros (Subtítulos + Barra de progreso)
+    let videoFilters = `subtitles='${assPathFormatted}'`;
+    if (duration > 0) {
+      videoFilters += `,drawbox=x=0:y=ih-20:w=iw*(t/${duration}):h=20:color=#FFFF00:t=fill`;
+    }
 
-      "-c:a", "aac", "-b:a", "192k", // Audio AAC
-      "-shortest", "-y",          // Cortar al final del audio y sobreescribir
+    const args = [
+      "-stream_loop", "-1",
+      "-i", templatePath,
+      "-i", audioPath,
+      "-vf", videoFilters,
+      "-map", "0:v", "-map", "1:a",
+      "-c:v", "libx264", "-preset", "ultrafast",
+      "-c:a", "aac", "-b:a", "192k",
+      "-shortest", "-y",
       outputVideoPath
     ];
 
-    console.log(`--> Renderizando Video Optimizado (H.264 Medium CRF 23)...`);
+    console.log(`--> Renderizando Video Karaoke Legato (Duración: ${duration}s)...`);
     
     const ffmpeg = spawn("ffmpeg", args);
     let stderrLog = "";
