@@ -13,7 +13,7 @@ const spleeterRoutes = require("./src/routes/spleeterRoutes");
 const audioRoutes = require("./src/routes/audioRoutes");
 const transcribeRoutes = require('./src/routes/transcribeRoutes');
 const usuariosRouter = require("./src/routes/usuarios");
-
+const lyricVideoRoutes = require("./src/routes/lyricVideoRoutes");
 // Utilidades
 const { startCleanupTask } = require("./src/utils/cleanUpTask");
 
@@ -39,7 +39,7 @@ app.use("/api/spleeter", spleeterRoutes);
 app.use("/api/audio", audioRoutes);
 app.use("/api/transcribe", transcribeRoutes);
 app.use("/usuarios", usuariosRouter);
-
+app.use("/api/video", lyricVideoRoutes);
 // 4. Documentación Swagger
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
