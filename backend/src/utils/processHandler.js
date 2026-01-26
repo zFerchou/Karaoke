@@ -27,7 +27,7 @@ exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
     // --- ESTABILIZADORES Y ACELERADORES ---
     CUDA_VISIBLE_DEVICES: "-1", // Obliga a usar CPU (la GPU mal configurada crashea VS Code)
     TF_CPP_MIN_LOG_LEVEL: "3",
-    OMP_NUM_THREADS: "5", // 8 núcleos: 4 hilos para buen balance calidad/velocidad/RAM
+    OMP_NUM_THREADS: "1", // 8 núcleos: 4 hilos para buen balance calidad/velocidad/RAM
     MKL_NUM_THREADS: "2", // Permite más paralelismo matemático
     TF_NUM_INTRAOP_THREADS: "2",
     TF_NUM_INTEROP_THREADS: "2",
