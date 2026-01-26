@@ -18,7 +18,6 @@ exports.transcribeAudio = (req, res) => {
   // Definir rutas absolutas
   const inputPath = path.resolve(__dirname, "../../uploads", req.file.filename);
   const outputDir = path.resolve(__dirname, "../../outputs", folderName);
-  const outputFile = path.join(outputDir, "transcript.txt");
 
   // --- CORRECCIÓN CRÍTICA: CREAR LA CARPETA DE SALIDA ---
   // Si no existe la carpeta outputs/nombre_archivo, la creamos.
@@ -30,9 +29,10 @@ exports.transcribeAudio = (req, res) => {
 
   console.log(`--> Iniciando Whisper: ${model} / ${language}`);
   console.log(`    Input: ${inputPath}`);
-  console.log(`    Output: ${outputFile}`);
+  console.log(`    Output Dir: ${outputDir}`);
 
-  spawnWhisper(inputPath, outputFile, language, model, (err, logs) => {
+  // Ahora Whisper CLI genera múltiples formatos dentro de outputDir
+  spawnWhisper(inputPath, outputDir, language, model, (err, logs) => {
     // Limpieza del audio temporal (opcional, según tu preferencia)
     if (fs.existsSync(inputPath)) fs.unlinkSync(inputPath);
 
@@ -46,17 +46,39 @@ exports.transcribeAudio = (req, res) => {
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
-    // --- LEER EL ARCHIVO PARA ENVIAR EL TEXTO AL FRONTEND ---
-    if (fs.existsSync(outputFile)) {
+    const txtFile = path.join(outputDir, "transcript.txt");
+    const jsonFile = path.join(outputDir, "transcript.json");
+    const srtFile = path.join(outputDir, "transcript.srt");
+
+    // --- LEER LOS ARCHIVOS PARA ENVIAR TEXTO + SEGMENTOS ---
+    if (fs.existsSync(txtFile)) {
       try {
-        const transcriptionText = fs.readFileSync(outputFile, "utf8");
+        const transcriptionText = fs.readFileSync(txtFile, "utf8");
+        let segments = [];
+        if (fs.existsSync(jsonFile)) {
+          try {
+            const data = JSON.parse(fs.readFileSync(jsonFile, "utf8"));
+            if (Array.isArray(data.segments)) {
+              segments = data.segments.map(seg => ({
+                start: seg.start,
+                end: seg.end,
+                text: (seg.text || "").trim(),
+              }));
+            }
+          } catch (_) {}
+        }
 
         // Enviamos la respuesta exitosa
         return res.json({
           status: "Success",
           info: { originalName, processingTime: `${duration}s`, language, model },
-          text: transcriptionText, // El frontend usará esto para mostrar la letra
-          file: `/outputs/${folderName}/transcript.txt`,
+          text: transcriptionText,
+          segments,
+          files: {
+            txt: `/outputs/${folderName}/transcript.txt`,
+            srt: fs.existsSync(srtFile) ? `/outputs/${folderName}/transcript.srt` : null,
+            json: fs.existsSync(jsonFile) ? `/outputs/${folderName}/transcript.json` : null,
+          },
         });
       } catch (readError) {
         return res.status(500).json({ error: "Error leyendo el archivo de transcripción." });

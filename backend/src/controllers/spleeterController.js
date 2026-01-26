@@ -1,6 +1,7 @@
 const { spawnSpleeter } = require("../utils/processHandler");
 const path = require("path");
 const fs = require("fs");
+const { applyNoiseGate } = require("../utils/noiseGate");
 
 exports.separateAudio = (req, res) => {
     if (!req.file) {
@@ -14,7 +15,7 @@ exports.separateAudio = (req, res) => {
     
     // Nombres de archivo
     const originalName = req.file.originalname;
-    // IMPORTANTE: El nombre de la carpeta suele ser el nombre del archivo sin extensión
+    
     const filenameWithoutExt = path.parse(req.file.filename).name; 
     
     const inputPath = path.resolve(__dirname, "../../uploads", req.file.filename);
@@ -67,8 +68,29 @@ exports.separateAudio = (req, res) => {
         const actualVocal = filesInFolder.find(f => f.includes('vocals'));
         const actualAcc = filesInFolder.find(f => f.includes('accompaniment'));
 
+        // --- POSTPROCESADO: Noise Gate en accompaniment si existe ---
+        if (actualAcc) {
+            const accPath = path.join(expectedFolder, actualAcc);
+            const accFiltered = path.join(expectedFolder, `filtered_${actualAcc}`);
+            applyNoiseGate(accPath, accFiltered, (err) => {
+                if (!err && fs.existsSync(accFiltered)) {
+                    foundFiles.accompaniment = `/outputs/${filenameWithoutExt}/filtered_${actualAcc}`;
+                } else {
+                    foundFiles.accompaniment = `/outputs/${filenameWithoutExt}/${actualAcc}`;
+                }
+                if (actualVocal) foundFiles.vocals = `/outputs/${filenameWithoutExt}/${actualVocal}`;
+                const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+                console.log(`✅ [ÉXITO] Archivos localizados y filtrados en ${duration}s`);
+                return res.json({
+                    status: "Success",
+                    info: { processingTime: `${duration}s` },
+                    files: foundFiles
+                });
+            });
+            return; // Salimos para esperar el callback del filtro
+        }
+
         if (actualVocal) foundFiles.vocals = `/outputs/${filenameWithoutExt}/${actualVocal}`;
-        if (actualAcc) foundFiles.accompaniment = `/outputs/${filenameWithoutExt}/${actualAcc}`;
 
         if (Object.keys(foundFiles).length > 0) {
             const duration = ((Date.now() - startTime) / 1000).toFixed(2);
