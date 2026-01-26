@@ -10,15 +10,11 @@ const limpiarProcesosAnteriores = () => {
   } catch (_) {}
 };
 
-// Ejecuta Whisper CLI para generar múltiples formatos (txt, srt, json)
-// Nota: ahora recibe outputDir en lugar de outputPath
 exports.spawnWhisper = (inputPath, outputDir, language = "es", model = "base", callback) => {
   limpiarProcesosAnteriores();
 
   const isWin = process.platform === "win32";
   const venvPath = path.resolve(__dirname, "../../venv", isWin ? "Scripts" : "bin");
-  // En Windows, whisper se instala como whisper.exe en venv\Scripts
-  // En Unix, suele ser un binario/launcher llamado "whisper"
   const whisperCmd = path.join(venvPath, isWin ? "whisper.exe" : "whisper");
 
   const env = {
@@ -28,7 +24,8 @@ exports.spawnWhisper = (inputPath, outputDir, language = "es", model = "base", c
     PYTHONIOENCODING: "utf-8",
   };
   
-  // Asegurar nombre fijo de salida: transcript.* dentro de outputDir
+  // AÑADIDO: "--word_timestamps", "True"
+  // Esto intenta forzar a Whisper a dar detalles de palabras para mejorar el karaoke
   const args = [
     inputPath,
     "--language", language,
@@ -37,6 +34,7 @@ exports.spawnWhisper = (inputPath, outputDir, language = "es", model = "base", c
     "--fp16", "False",
     "--output_dir", outputDir,
     "--output_format", "all",
+    "--word_timestamps", "True" 
   ];
 
   const child = spawn(whisperCmd, args, { env, shell: false });
@@ -47,7 +45,6 @@ exports.spawnWhisper = (inputPath, outputDir, language = "es", model = "base", c
   child.stderr.on("data", (data) => { stderrLog += data.toString(); });
 
   child.on("close", (code) => {
-    // Attempt to normalize output filenames regardless of exit code
     let hasOutputs = false;
     try {
       const baseName = path.parse(inputPath).name;
@@ -57,17 +54,13 @@ exports.spawnWhisper = (inputPath, outputDir, language = "es", model = "base", c
         if (fs.existsSync(src)) {
           try { fs.renameSync(src, dst); } catch (_) {}
         }
-        if (fs.existsSync(dst)) {
-          hasOutputs = true;
-        }
+        if (fs.existsSync(dst)) hasOutputs = true;
       });
     } catch (_) {}
 
     if (code === 0 || hasOutputs) {
-      // Treat as success if exit code is 0 or we have the expected outputs
       callback(null, { stdout: stdoutLog, stderr: stderrLog });
     } else {
-      // Propagate error with captured stderr
       callback(new Error(stderrLog || `Exit code ${code}`), { stdout: stdoutLog, stderr: stderrLog });
     }
   });
