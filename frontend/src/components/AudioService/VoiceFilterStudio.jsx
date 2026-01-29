@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { 
-  Upload, Mic, Play, Download, Music, Wand2, Loader2, 
-  Layers, AudioWaveform, FileText, AlignLeft, Video, Film // Importamos iconos de Video
-} from 'lucide-react';
+import { Mic, Layers, FileText, Film, AudioWaveform, AlignLeft, Video } from 'lucide-react';
 import { processAudio, separateAudio, transcribeAudio, createLyricVideo } from './audioService';
-import './VoiceFilterStudio.css'; 
+import './VoiceFilterStudio.css';
+import FilterPanel from './panels/FilterPanel';
+import SpleeterPanel from './panels/SpleeterPanel';
+import TranscribePanel from './panels/TranscribePanel';
+import KaraokePanel from './panels/KaraokePanel';
 
 const BASE_SERVER_URL = "http://localhost:3000"; 
 
@@ -31,7 +32,6 @@ const TRANSCRIBE_OPTIONS = [
   { id: 'transcribe', label: 'Generar Letra', desc: 'Convierte audio a texto (Whisper)', color: '#10b981' },
 ];
 
-// NUEVA OPCIÓN PARA VIDEO
 const VIDEO_OPTIONS = [
   { id: 'karaoke_video', label: 'Video Lyric (Karaoke)', desc: 'Crea video MP4 con subtítulos animados', color: '#f43f5e' },
 ];
@@ -86,7 +86,7 @@ const VoiceFilterStudio = () => {
     }
   };
 
-    const handleSubmit = async () => {
+  const handleSubmit = async () => {
     const currentFile = files[mode];
     if (!currentFile) return;
     
@@ -150,15 +150,27 @@ const VoiceFilterStudio = () => {
     }
   };
 
-  const currentFile = files[mode];
-  const currentResult = results[mode];
-  
-  // Seleccionar opciones según el modo
-  let currentOptions = [];
-  if (mode === 'filter') currentOptions = FILTER_OPTIONS;
-  else if (mode === 'spleeter') currentOptions = SPLEETER_OPTIONS;
-  else if (mode === 'transcribe') currentOptions = TRANSCRIBE_OPTIONS;
-  else if (mode === 'video') currentOptions = VIDEO_OPTIONS;
+  // Paneles
+  const panelProps = {
+    file: files[mode],
+    setFile: f => setFiles(prev => ({ ...prev, [mode]: f })),
+    result: results[mode],
+    setResult: r => setResults(prev => ({ ...prev, [mode]: r })),
+    isProcessing,
+    onSubmit: handleSubmit,
+    error,
+    selectedOption,
+    setSelectedOption,
+    selectedQuality,
+    setSelectedQuality,
+    filterOptions: FILTER_OPTIONS,
+    qualityOptions: QUALITY_OPTIONS,
+    spleeterOptions: SPLEETER_OPTIONS,
+    transcribeOptions: TRANSCRIBE_OPTIONS,
+    videoOptions: VIDEO_OPTIONS,
+    fileInputRef,
+    handleFileChange
+  };
 
   return (
     <div className="vfs-container">
@@ -195,151 +207,10 @@ const VoiceFilterStudio = () => {
         </div>
 
         <div className="vfs-content">
-          <div className="vfs-controls">
-            {/* AREA DE UPLOAD */}
-            <div
-              className={`vfs-upload-area ${currentFile ? "active" : ""}`}
-              onClick={() => fileInputRef.current.click()}
-            >
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="audio/*,video/*"
-                style={{ display: "none" }}
-              />
-              <div className="vfs-upload-content">
-                {currentFile ? (
-                  <>
-                    <Music size={40} color="#a78bfa" />
-                    <span style={{ fontWeight: "500", color: "#ddd", fontSize: "0.9rem" }}>
-                      {currentFile.name}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Upload size={40} color="#64748b" />
-                    <span style={{ color: "#94a3b8" }}>
-                      Subir archivo para {mode === 'video' ? 'Karaoke' : mode}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* LISTA DE OPCIONES */}
-            <div className="vfs-filter-list">
-              {currentOptions.map((opt) => (
-                <button
-                  key={opt.id}
-                  onClick={() => setSelectedOption(opt.id)}
-                  className={`vfs-filter-btn ${selectedOption === opt.id ? "selected" : ""}`}
-                >
-                  <div className="filter-dot" style={{ backgroundColor: opt.color }}></div>
-                  <div style={{ textAlign: "left" }}>
-                    <div style={{ fontWeight: "bold", fontSize: "0.9rem" }}>{opt.label}</div>
-                    <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>{opt.desc}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {/* SELECTOR DE CALIDAD (SOLO FILTRO) */}
-            {mode === "filter" && (
-              <div className="vfs-quality-selector" style={{ marginTop: "20px" }}>
-                <label className="vfs-filter-label">Calidad de Exportación</label>
-                <div className="vfs-quality-grid">
-                  {QUALITY_OPTIONS.map((q, index) => (
-                    <button
-                      key={index}
-                      className={`vfs-quality-chip ${selectedQuality.label === q.label ? "active" : ""}`}
-                      onClick={() => setSelectedQuality(q)}
-                    >
-                      {q.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* BOTÓN DE PROCESAR */}
-            <button
-              onClick={handleSubmit}
-              disabled={!currentFile || isProcessing}
-              className="vfs-action-btn"
-            >
-              {isProcessing ? <Loader2 className="animate-spin" /> : <Wand2 />}
-              {isProcessing ? "Procesando..." : mode === 'video' ? "Generar Video" : `Procesar ${mode}`}
-            </button>
-            {error && <div className="vfs-error">{error}</div>}
-          </div>
-
-          {/* ÁREA DE RESULTADOS (PANTALLA DE VICTORIA) */}
-          <div className="vfs-result-area">
-            {!currentResult ? (
-              <div className="vfs-placeholder">
-                <Play size={48} />
-                <p>El resultado aparecerá aquí</p>
-              </div>
-            ) : (
-              <>
-                {/* --- RESULTADO DE AUDIO --- */}
-                {currentResult.type === "audio" && (
-                  <div className="vfs-success">
-                    <Music size={56} color="#4ade80" />
-                    <audio controls src={currentResult.url} className="vfs-audio-player" key={currentResult.url} />
-                    <a href={currentResult.url} download className="vfs-download-btn">
-                      <Download size={20} /> Descargar Audio
-                    </a>
-                  </div>
-                )}
-
-                {/* --- RESULTADO DE VIDEO (KARAOKE) --- */}
-                {currentResult.type === "video" && (
-                  <div className="vfs-success" style={{width: '100%'}}>
-                    <div style={{ position: 'relative', width: '100%', borderRadius: '8px', overflow: 'hidden', border: '1px solid #334155' }}>
-                        <video 
-                            controls 
-                            src={currentResult.url} 
-                            style={{ width: '100%', display: 'block' }} 
-                            key={currentResult.url}
-                        />
-                    </div>
-                    
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '15px', width: '100%' }}>
-                        <a href={currentResult.url} download className="vfs-download-btn">
-                            <Video size={18} /> Video MP4
-                        </a>
-                        <a href={currentResult.assUrl} download className="vfs-download-btn" style={{ background: '#334155' }}>
-                            <FileText size={18} /> Subtítulos .ASS
-                        </a>
-                    </div>
-                  </div>
-                )}
-
-                {/* --- RESULTADO DE TEXTO --- */}
-                {currentResult.type === "text" && (
-                  <div className="vfs-success" style={{ width: "100%" }}>
-                    <FileText size={32} color="#10b981" />
-                    <div className="text-scroll-area" style={{
-                        whiteSpace: "pre-wrap", textAlign: "left", background: "#0f172a",
-                        padding: "20px", borderRadius: "8px", marginTop: "15px",
-                        maxHeight: "300px", overflowY: "auto", border: "1px solid #334155", width: '100%'
-                    }}>
-                      {currentResult.content}
-                    </div>
-                    <button
-                      onClick={() => navigator.clipboard.writeText(currentResult.content)}
-                      className="vfs-download-btn"
-                      style={{ marginTop: "10px", width: "100%", cursor: "pointer" }}
-                    >
-                      Copiar Letra
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          {mode === 'filter' && <FilterPanel {...panelProps} />}
+          {mode === 'spleeter' && <SpleeterPanel {...panelProps} />}
+          {mode === 'transcribe' && <TranscribePanel {...panelProps} />}
+          {mode === 'video' && <KaraokePanel {...panelProps} />}
         </div>
       </div>
     </div>
