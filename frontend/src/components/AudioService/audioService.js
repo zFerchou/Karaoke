@@ -78,6 +78,17 @@ export const transcribeAudio = async (file) => {
   }
 };
 
+// --- CANCELACIÓN DE SPLEETER ---
+export const cancelSpleeterProcess = async (filename) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/spleeter/cancel`, { fileName: filename });
+    return response.data;
+  } catch (error) {
+    console.error('Error cancelando proceso Spleeter:', error);
+    throw error;
+  }
+}
+
 // Función genérica para obtener URL de descarga
 // NOTA: Ajusta esto según si tu backend devuelve rutas diferentes para spleeter
 export const getDownloadUrl = (filename) => {

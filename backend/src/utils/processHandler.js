@@ -1,22 +1,18 @@
 const { spawn, execSync } = require("child_process");
 const path = require("path");
 
-// --- LIMPIEZA DE MEMORIA ---
+const procesosSpleeter = {};
+
 const limpiarProcesosAnteriores = () => {
   try {
     if (process.platform === "win32") {
-      // Elimina cualquier rastro de Python colgado en RAM
       execSync('taskkill /F /IM python.exe /T', { stdio: 'ignore' });
     }
-  } catch (e) {
-    // Silencioso si no hay procesos
-  }
+  } catch (e) {}
 };
 
-exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
-  // Solo limpiar procesos si ocurre un error, no antes de cada tarea
-  // limpiarProcesosAnteriores();
-
+// Se añade fileKey para sincronizar con el originalname del frontend
+exports.spawnSpleeter = (inputPath, outputDir, format, fileKey, callback) => {
   const isWin = process.platform === "win32";
   const venvPath = path.resolve(__dirname, "../../venv", isWin ? "Scripts" : "bin");
   const pythonExe = path.join(venvPath, isWin ? "python.exe" : "python3");
@@ -24,11 +20,10 @@ exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
   const env = {
     ...process.env,
     PATH: `${venvPath}${isWin ? ";" : ":"}${process.env.PATH}`,
-    // --- ESTABILIZADORES Y ACELERADORES ---
-    CUDA_VISIBLE_DEVICES: "-1", // Obliga a usar CPU (la GPU mal configurada crashea VS Code)
+    CUDA_VISIBLE_DEVICES: "-1",
     TF_CPP_MIN_LOG_LEVEL: "3",
-    OMP_NUM_THREADS: "5", // 8 núcleos: 4 hilos para buen balance calidad/velocidad/RAM
-    MKL_NUM_THREADS: "2", // Permite más paralelismo matemático
+    OMP_NUM_THREADS: "5",
+    MKL_NUM_THREADS: "2",
     TF_NUM_INTRAOP_THREADS: "2",
     TF_NUM_INTEROP_THREADS: "2",
     PYTHONMALLOC: "malloc",
@@ -44,23 +39,34 @@ exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
   ];
 
   if (format === "mp3") {
-    args.splice(args.length - 1, 0, "-b", "320k"); // Bitrate máximo para MP3
+    args.splice(args.length - 1, 0, "-b", "320k");
   }
 
   const child = spawn(pythonExe, args, { env, shell: false });
 
+  // Guardamos usando la clave sincronizada
+  procesosSpleeter[fileKey] = child;
+  console.log(`[DEBUG] Proceso registrado con clave: ${fileKey}`);
+
   let errorLog = "";
   child.stderr.on("data", (data) => {
     errorLog += data.toString();
-    process.stdout.write(`[Python Log]: ${data}`);
   });
 
   child.on("close", (code) => {
-    console.log(`[DEBUG] Python terminó proceso con código: ${code}`);
-    // Si falló, limpiamos inmediatamente para liberar la RAM
+    delete procesosSpleeter[fileKey];
     if (code !== 0) limpiarProcesosAnteriores();
     callback(code !== 0 ? true : null, errorLog);
   });
 };
 
-
+exports.cancelSpleeterProcess = (fileName) => {
+  const proc = procesosSpleeter[fileName];
+  if (proc) {
+    proc.kill('SIGKILL');
+    delete procesosSpleeter[fileName];
+    console.log(`[CANCEL] Proceso ${fileName} abortado.`);
+    return true;
+  }
+  return false;
+};
