@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Mic, Layers, FileText, Film, AudioWaveform, AlignLeft, Video } from 'lucide-react';
 import { processAudio, separateAudio, transcribeAudio, createLyricVideo } from './audioService';
+import { cancelSpleeterProcess } from './cancelService';
 import './VoiceFilterStudio.css';
 import FilterPanel from './panels/FilterPanel';
 import SpleeterPanel from './panels/SpleeterPanel';
@@ -150,6 +151,14 @@ const VoiceFilterStudio = () => {
     }
   };
 
+  // Maneja la cancelación del proceso Spleeter
+  const handleCancelSpleeter = () => {
+    setIsProcessing(false);
+    setError(null);
+    setResults(prev => ({ ...prev, spleeter: null }));
+    setFiles(prev => ({ ...prev, spleeter: null }));
+  };
+
   // Paneles
   const panelProps = {
     file: files[mode],
@@ -158,6 +167,7 @@ const VoiceFilterStudio = () => {
     setResult: r => setResults(prev => ({ ...prev, [mode]: r })),
     isProcessing,
     onSubmit: handleSubmit,
+    onCancel: mode === 'spleeter' ? handleCancelSpleeter : undefined,
     error,
     selectedOption,
     setSelectedOption,
