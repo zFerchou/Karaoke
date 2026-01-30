@@ -1,19 +1,49 @@
 import React, { useState } from 'react';
-import { Upload, Music, Download, Wand2, Loader2, Sliders, XCircle, CheckCircle2, Zap } from 'lucide-react';
+import { 
+  Upload, Music, Download, Wand2, Loader2, Sliders, 
+  XCircle, CheckCircle2, Zap 
+} from 'lucide-react';
+import { cancelAudioFilterProcess } from "../audioService";
 
 const FilterPanel = ({
-  file, setFile, result, isProcessing, onSubmit, error, selectedOption, setSelectedOption, selectedQuality, setSelectedQuality, filterOptions, qualityOptions, fileInputRef, handleFileChange
+  file,
+  setFile,
+  result,
+  isProcessing,
+  onSubmit,
+  onCancel,
+  error,
+  setError, // Asegúrate de recibir setError como prop del padre
+  selectedOption,
+  setSelectedOption,
+  selectedQuality,
+  setSelectedQuality,
+  filterOptions,
+  qualityOptions,
+  fileInputRef,
+  handleFileChange,
 }) => {
   const [isClosing, setIsClosing] = useState(false);
 
-  // Simulación de cancelación (o conecta tu servicio real aquí)
-  const handleCancelAction = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      // Aquí iría la llamada al backend para cancelar si existe
+  // LÓGICA DE CANCELACIÓN REAL (Fusionada)
+  const handleCancelAction = async () => {
+    try {
+      setIsClosing(true);
+      const response = await cancelAudioFilterProcess();
+
+      // Notificamos al padre para detener el loading
+      if (onCancel) onCancel();
+
+      setTimeout(() => {
+        setIsClosing(false);
+        if (response && response.message) {
+          setError(response.message);
+        }
+      }, 300);
+    } catch (err) {
+      setError("No se pudo cancelar el proceso.");
       setIsClosing(false);
-      window.location.reload(); // O resetear estados según tu flujo
-    }, 300);
+    }
   };
 
   const handleDone = () => {
@@ -23,7 +53,7 @@ const FilterPanel = ({
 
   return (
     <div className="spleeter-container">
-      {/* HEADER */}
+      {/* HEADER INFORMATIVO */}
       <div className="spleeter-header-info">
         <div className="spleeter-title-group">
           <h2>Masterización de Audio</h2>
@@ -34,7 +64,7 @@ const FilterPanel = ({
         </div>
       </div>
 
-      {/* MODAL DE PROCESAMIENTO */}
+      {/* MODAL DE PROCESAMIENTO Y ÉXITO (Diseño Moderno) */}
       {(isProcessing || isClosing) && (
         <div className={`vfs-modal-overlay ${isClosing ? 'exit' : 'entry'}`}>
           <div className="vfs-modal-content">
@@ -50,7 +80,7 @@ const FilterPanel = ({
                   <div className="vfs-progress-fill" style={{ background: 'linear-gradient(90deg, #3b82f6, #60a5fa)' }}></div>
                 </div>
                 <button className="vfs-cancel-btn" onClick={handleCancelAction}>
-                  <XCircle size={18} /> Cancelar
+                  <XCircle size={18} /> Cancelar Proceso
                 </button>
               </>
             ) : (
@@ -69,95 +99,95 @@ const FilterPanel = ({
 
       {/* CONTROLES PRINCIPALES */}
       <div className="vfs-content-grid">
-        {/* Lado Izquierdo: Upload y Opciones */}
+        {/* Panel Izquierdo: Upload y Estilos */}
         <div className="vfs-left-panel">
-            <div 
-                className={`vfs-upload-area ${file ? "active" : ""}`} 
-                onClick={() => fileInputRef.current.click()}
-            >
-                <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="audio/*,video/*" style={{ display: "none" }} />
-                <div className="vfs-upload-content">
-                {file ? (
-                    <>
-                    <Music size={40} color="#60a5fa" />
-                    <span className="file-name-display">{file.name}</span>
-                    <span className="file-change-hint">Click para cambiar</span>
-                    </>
-                ) : (
-                    <>
-                    <Upload size={40} color="#64748b" />
-                    <span>Subir archivo original</span>
-                    </>
-                )}
-                </div>
+          <div 
+            className={`vfs-upload-area ${file ? "active" : ""}`} 
+            onClick={() => fileInputRef.current.click()}
+          >
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="audio/*,video/*" style={{ display: "none" }} />
+            <div className="vfs-upload-content">
+              {file ? (
+                <>
+                  <Music size={40} color="#60a5fa" />
+                  <span className="file-name-display">{file.name}</span>
+                  <span className="file-change-hint">Click para cambiar</span>
+                </>
+              ) : (
+                <>
+                  <Upload size={40} color="#64748b" />
+                  <span>Subir archivo original</span>
+                </>
+              )}
             </div>
+          </div>
 
-            <div style={{ marginTop: '20px' }}>
-                <label className="section-label">Estilo de Filtro</label>
-                <div className="vfs-filter-grid-compact">
-                {filterOptions.map((opt) => (
-                    <button
-                    key={opt.id}
-                    onClick={() => setSelectedOption(opt.id)}
-                    className={`vfs-filter-card ${selectedOption === opt.id ? "selected" : ""}`}
-                    >
-                    <div className="filter-dot" style={{ backgroundColor: opt.color }}></div>
-                    <span>{opt.label}</span>
-                    </button>
-                ))}
-                </div>
+          <div style={{ marginTop: '20px' }}>
+            <label className="section-label">Estilo de Filtro</label>
+            <div className="vfs-filter-grid-compact">
+              {filterOptions.map((opt) => (
+                <button
+                  key={opt.id}
+                  onClick={() => setSelectedOption(opt.id)}
+                  className={`vfs-filter-card ${selectedOption === opt.id ? "selected" : ""}`}
+                >
+                  <div className="filter-dot" style={{ backgroundColor: opt.color }}></div>
+                  <span>{opt.label}</span>
+                </button>
+              ))}
             </div>
+          </div>
         </div>
 
-        {/* Lado Derecho: Calidad y Acción */}
+        {/* Panel Derecho: Calidad y Botón de Acción */}
         <div className="vfs-right-panel">
-             <div className="vfs-quality-selector">
-                <label className="section-label">Calidad de Salida</label>
-                <div className="vfs-quality-stack">
-                {qualityOptions.map((q, index) => (
-                    <button
-                    key={index}
-                    className={`vfs-quality-row ${selectedQuality.label === q.label ? "active" : ""}`}
-                    onClick={() => setSelectedQuality(q)}
-                    >
-                    <div className="radio-circle">
-                        {selectedQuality.label === q.label && <div className="radio-inner" />}
-                    </div>
-                    {q.label}
-                    </button>
-                ))}
-                </div>
-            </div>
-
-            <div className="action-wrapper" style={{marginTop: 'auto'}}>
-                <button 
-                    onClick={onSubmit} 
-                    disabled={!file || isProcessing} 
-                    className="vfs-action-btn"
-                    style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' }}
+          <div className="vfs-quality-selector">
+            <label className="section-label">Calidad de Salida</label>
+            <div className="vfs-quality-stack">
+              {qualityOptions.map((q, index) => (
+                <button
+                  key={index}
+                  className={`vfs-quality-row ${selectedQuality.label === q.label ? "active" : ""}`}
+                  onClick={() => setSelectedQuality(q)}
                 >
-                    {isProcessing ? <Loader2 className="animate-spin" /> : <Wand2 />}
-                    {isProcessing ? "Procesando..." : "Aplicar Filtros"}
+                  <div className="radio-circle">
+                    {selectedQuality.label === q.label && <div className="radio-inner" />}
+                  </div>
+                  {q.label}
                 </button>
-                {error && <div className="vfs-error">{error}</div>}
+              ))}
             </div>
+          </div>
+
+          <div className="action-wrapper" style={{ marginTop: 'auto' }}>
+            <button 
+              onClick={onSubmit} 
+              disabled={!file || isProcessing} 
+              className="vfs-action-btn"
+              style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)' }}
+            >
+              {isProcessing ? <Loader2 className="animate-spin" /> : <Wand2 />}
+              {isProcessing ? "Procesando..." : "Aplicar Filtros"}
+            </button>
+            {error && <div className="vfs-error" style={{ marginTop: '10px' }}>{error}</div>}
+          </div>
         </div>
       </div>
 
-      {/* RESULTADO (VICTORY SCREEN) */}
+      {/* ÁREA DE RESULTADO FINAL */}
       {result && (
         <div className="vfs-result-area">
           <div className="vfs-success result-card-animated">
             <div className="result-header">
-                <CheckCircle2 size={24} color="#60a5fa" />
-                <span style={{color: '#60a5fa', fontSize: '1.1rem'}}>Audio Masterizado</span>
+              <CheckCircle2 size={24} color="#60a5fa" />
+              <span style={{ color: '#60a5fa', fontSize: '1.1rem', fontWeight: '600' }}>Audio Masterizado</span>
             </div>
             <div className="audio-visualizer-mock">
-                {/* Visual decorativo */}
-                <div className="bar"></div><div className="bar"></div><div className="bar"></div><div className="bar"></div>
+              <div className="bar"></div><div className="bar"></div><div className="bar"></div><div className="bar"></div>
+              <div className="bar"></div><div className="bar"></div><div className="bar"></div><div className="bar"></div>
             </div>
             <audio controls src={result.url} className="vfs-audio-player" key={result.url} />
-            <a href={result.url} download className="vfs-download-btn full-width" style={{background: '#1e40af'}}>
+            <a href={result.url} download className="vfs-download-btn full-width" style={{ background: '#1e40af', marginTop: '15px' }}>
               <Download size={20} /> Descargar Audio Filtrado
             </a>
           </div>
