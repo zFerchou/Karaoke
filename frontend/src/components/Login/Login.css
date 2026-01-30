@@ -1,3 +1,7 @@
+/* 1. EL IMPORT SIEMPRE VA PRIMERO */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+/* 2. LUEGO EL RESET Y EL RESTO DE ESTILOS */
 /* RESET GLOBAL: Elimina bordes blancos accidentales */
 * {
     margin: 0;
@@ -10,9 +14,6 @@ html, body {
     height: 100%;
     background-color: #0B1020; /* Color base para evitar destellos blancos */
 }
-
-/* Importar fuente moderna */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
 :root {
   --bg-deep: #0B1020;
@@ -30,9 +31,8 @@ html, body {
   justify-content: center;
   align-items: center;
   width: 100%;
-  min-height: 100vh; /* Asegura que cubra toda la altura de la pantalla */
+  min-height: 100vh;
   background-color: var(--bg-deep);
-  /* Graduación de fondo similar a la imagen */
   background: radial-gradient(circle at top right, #1e1b4b, #0b1020 70%);
   font-family: 'Inter', sans-serif;
   position: relative;
@@ -159,7 +159,7 @@ html, body {
 }
 
 .separator span {
-  background: #1e2545; /* Ajustado al fondo de la card para que no se note el corte */
+  background: #1e2545; 
   padding: 0 10px;
   color: var(--text-dim);
   font-size: 0.8rem;

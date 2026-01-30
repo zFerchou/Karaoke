@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, ArrowRight, Cpu, FileText, Video, Wand2 } from 'lucide-react';
+import { User, ArrowRight, Cpu, FileText, Video, Wand2, Lock, XCircle } from 'lucide-react'; // Agregamos XCircle para el icono de la alerta
 import Navbar from '../Navbar';
 import './Home.css';
 
@@ -8,6 +8,9 @@ const Home = () => {
   const navigate = useNavigate();
   const [usuario, setUsuario] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // NUVEO ESTADO: Para controlar la visibilidad de la alerta personalizada
+  const [showRestrictedAlert, setShowRestrictedAlert] = useState(false);
 
   useEffect(() => {
     const verificarSesion = async () => {
@@ -39,12 +42,28 @@ const Home = () => {
     verificarSesion();
   }, []);
 
-  const handleServiceClick = (path) => {
+  const handleServiceClick = (path, requiresPremium = false) => {
+    // 1. Si no está logueado
     if (!usuario) {
-      navigate('/login');
-    } else {
-      navigate(path);
+      navigate('/login'); 
+      return;
     }
+
+    // 2. Si requiere premium y el usuario NO lo es
+    if (requiresPremium && usuario.rol !== 'premium') {
+      // EN LUGAR DE ALERT, ACTIVAMOS NUESTRO ESTADO
+      setShowRestrictedAlert(true);
+      
+      // Hacemos que desaparezca automáticamente después de 3.5 segundos
+      setTimeout(() => {
+        setShowRestrictedAlert(false);
+      }, 3500);
+      
+      return; 
+    }
+
+    // 3. Si pasa las validaciones, navegar
+    navigate(path);
   };
 
   if (loading) {
@@ -58,8 +77,14 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      {/* 1. USAMOS EL COMPONENTE ÚNICO */}
       <Navbar />
+
+      {/* --- NUEVO: ALERTA PERSONALIZADA FLOTANTE --- */}
+      {/* Se renderiza condicionalmente si showRestrictedAlert es true */}
+      <div className={`custom-alert-toast ${showRestrictedAlert ? 'show' : ''}`}>
+        <XCircle size={24} color="#FF6A6A" />
+        <span>Acceso Restringido: La función de Karaoke es exclusiva para usuarios Premium.</span>
+      </div>
 
       <main className="home-content">
         <section className="welcome-section">
@@ -72,6 +97,8 @@ const Home = () => {
         </section>
 
         <div className="info-grid">
+          
+          {/* --- SEPARADOR (GRATIS) --- */}
           <div className="info-card">
             <div className="card-icon"><Cpu size={24} color="#A78BFA" /></div>
             <h3>Separador IA</h3>
@@ -81,6 +108,7 @@ const Home = () => {
             </button>
           </div>
 
+          {/* --- TRANSCRIPTOR (GRATIS) --- */}
           <div className="info-card">
             <div className="card-icon"><FileText size={24} color="#10B981" /></div>
             <h3>Transcriptor de Letras</h3>
@@ -90,15 +118,25 @@ const Home = () => {
             </button>
           </div>
 
-          <div className="info-card">
+          {/* --- KARAOKE (PREMIUM) --- */}
+          <div className={`info-card ${usuario && usuario.rol !== 'premium' ? 'locked-card' : ''}`}>
             <div className="card-icon"><Video size={24} color="#F43F5E" /></div>
             <h3>Creador de Karaoke</h3>
             <p>Genera videos MP4 con subtítulos sincronizados automáticamente.</p>
-            <button className="card-action" onClick={() => handleServiceClick('/karaoke')}>
-              {usuario ? 'Generar Video' : 'Ingresa para usar'} <ArrowRight size={16} />
+            
+            <button 
+              className={`card-action ${usuario && usuario.rol !== 'premium' ? 'btn-disabled' : ''}`} 
+              onClick={() => handleServiceClick('/karaoke', true)} 
+            >
+              {usuario && usuario.rol !== 'premium' ? (
+                <>Bloqueado (Premium) <Lock size={16} /></>
+              ) : (
+                <>{usuario ? 'Generar Video' : 'Ingresa para usar'} <ArrowRight size={16} /></>
+              )}
             </button>
           </div>
 
+          {/* --- FILTROS (GRATIS) --- */}
           <div className="info-card">
             <div className="card-icon"><Wand2 size={24} color="#3B82F6" /></div>
             <h3>Filtros de Audio</h3>
@@ -115,7 +153,21 @@ const Home = () => {
             <div className="profile-info">
               <h3>{usuario.nombre} {usuario.apellido}</h3>
               <p>{usuario.correo}</p>
-              <span className="badge">{usuario.rol}</span>
+              
+              <div style={{ 
+                marginTop: '8px', 
+                display: 'inline-block',
+                padding: '4px 12px', 
+                borderRadius: '12px',
+                fontSize: '0.85rem',
+                fontWeight: 'bold',
+                backgroundColor: usuario.rol === 'premium' ? 'rgba(255, 215, 0, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                color: usuario.rol === 'premium' ? '#FFD700' : '#A0A0A0',
+                border: usuario.rol === 'premium' ? '1px solid #FFD700' : '1px solid #555'
+              }}>
+                {usuario.rol === 'premium' ? '✨ Cuenta Premium' : '👤 Cuenta Gratuita'}
+              </div>
+
             </div>
           </div>
         ) : (
