@@ -36,7 +36,7 @@ const verificarToken = (req, res, next) => {
 
 /**
  * @swagger
- * /api/usuarios:
+ * /usuarios:
  *   get:
  *     summary: Obtener todos los usuarios
  *     tags: [Usuarios]
@@ -53,7 +53,7 @@ const verificarToken = (req, res, next) => {
 
 /**
  * @swagger
- * /api/usuarios:
+ * /usuarios:
  *   post:
  *     summary: Crear un usuario
  *     tags: [Usuarios]
@@ -81,7 +81,7 @@ const verificarToken = (req, res, next) => {
 
 /**
  * @swagger
- * /api/usuarios/login:
+ * /usuarios/login:
  *   post:
  *     summary: Login de usuario
  *     tags: [Usuarios]
@@ -103,7 +103,7 @@ const verificarToken = (req, res, next) => {
 
 /**
  * @swagger
- * /api/usuarios/google-login:
+ * /usuarios/google-login:
  *   post:
  *     summary: Login con Google
  *     tags: [Usuarios]
