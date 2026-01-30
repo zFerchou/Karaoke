@@ -23,7 +23,8 @@ const Login = () => {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
-        navigate('/'); 
+        // Aquí elegí tu versión: ir al Studio
+        navigate('/home'); 
       } else {
         setError(data.message || "Error al iniciar sesión");
       }
@@ -75,7 +76,7 @@ const Login = () => {
             <a href="#!" className="forgot-password">¿Olvidaste tu contraseña?</a>
 
             <div className="separator">
-               <span>O continúa con</span>
+                <span>O continúa con</span>
             </div>
 
             <div className="social-login">
