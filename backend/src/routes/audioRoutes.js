@@ -129,4 +129,35 @@ router.post(
  */
 router.get("/download/:filename", audioController.downloadFile);
 
+/**
+ * @swagger
+ * /api/audio/cancel:
+ *   post:
+ *     summary: Cancelar proceso de filtrado
+ *     description: >
+ *       Detiene la ejecución de FFmpeg. Si no se envía `fileName`,
+ *       intentará detener el último proceso iniciado.
+ *     tags:
+ *       - Filtros para la voz
+ *     requestBody:
+ *       required: false
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               fileName:
+ *                 type: string
+ *                 description: Nombre del archivo a cancelar (opcional)
+ *                 example: entrevista_cliente.mp3
+ *
+ *     responses:
+ *       200:
+ *         description: Proceso detenido
+ *
+ *       404:
+ *         description: No hay procesos activos
+ */
+router.post("/cancel", audioController.cancelProcessing);
+
 module.exports = router;

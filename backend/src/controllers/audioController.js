@@ -2,6 +2,17 @@ const audioHandler = require("../utils/audioHandler");
 const path = require("node:path");
 const fs = require("node:fs");
 
+let lastFileKey = null;
+
+const cleanFileName = (name) => {
+  return name
+    .normalize("NFD")
+    .replaceAll(/[\u0300-\u036f]/g, "")
+    .replaceAll(/[^a-zA-Z0-9.]/g, "_")
+    .replaceAll(/_{2,}/g, "_")
+    .toLowerCase();
+};
+
 exports.uploadAndFilter = (req, res) => {
   if (!req.file)
     return res.status(400).json({ error: "No se subió ningún archivo" });
@@ -27,12 +38,10 @@ exports.uploadAndFilter = (req, res) => {
     });
   }
 
-  const safeOriginalName = req.file.originalname
-    .normalize("NFD") // Descompone caracteres (ó -> o + ´)
-    .replace(/[\u0300-\u036f]/g, "") // Quita los acentos
-    .replace(/[^a-zA-Z0-9.]/g, "_") // Todo lo que no sea letra/número a "_"
-    .replace(/_{2,}/g, "_") // Evita el doble guion bajo "__"
-    .toLowerCase();
+  const fileKey = req.file.originalname;
+  lastFileKey = fileKey;
+
+  const safeOriginalName = cleanFileName(req.file.originalname);
   const baseName = path.parse(safeOriginalName).name;
   const outputName = `filtered_${filterType}_${Date.now()}_${baseName}.${format}`;
   const outputPath = path.join(
@@ -65,6 +74,7 @@ exports.uploadAndFilter = (req, res) => {
       filterType,
       format,
       quality,
+      fileKey,
       (success) => {
         if (fs.existsSync(inputPath)) {
           fs.unlinkSync(inputPath);
@@ -132,4 +142,28 @@ const cleanFolderSync = (folderPath) => {
   } catch (err) {
     console.error("❌ Error al limpiar carpeta previa:", err);
   }
+};
+
+exports.cancelProcessing = (req, res) => {
+  const { fileName } = req.body || {};
+
+  let keyToCancel = fileName ? fileName : lastFileKey;
+
+
+  if (!keyToCancel)
+    return res.status(500).json({ error: "Falta el nombre del archivo." });
+
+  const cancelled = audioHandler.cancelAudioProcess(keyToCancel);
+
+  if (cancelled) {
+    if (keyToCancel == lastFileKey) lastFileKey = null;
+    return res.status(200).json({
+      status: "cancelled",
+      message: "Proceso detenido correctamente.",
+    });
+  }
+
+  return res
+    .status(404)
+    .json({ error: "No se encontro un proceso activo para ese archivo" });
 };

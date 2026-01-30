@@ -1,10 +1,11 @@
 const { spawn, exec } = require("node:child_process");
 const path = require("node:path");
 
+const activeProcesses = new Map();
+
 exports.validarAudio = (filePath, callback) => {
   // Ajustamos el comando para obtener formato y duración de forma independiente
   const command = `ffprobe -v error -show_entries format=duration,format_name -of default=noprint_wrappers=1:nokey=1 "${filePath}"`;
-
   exec(command, (error, stdout) => {
     if (error) {
       return callback(
@@ -49,6 +50,7 @@ exports.applyAudioFilter = (
   filterType,
   format,
   bitrate,
+  fileKey,
   callback,
 ) => {
   const filterMap = {
@@ -83,12 +85,26 @@ exports.applyAudioFilter = (
 
   const ffmpeg = spawn("ffmpeg", args);
 
+  activeProcesses.set(fileKey, ffmpeg);
+
   ffmpeg.stderr.on("data", (data) => {
     console.error(`FFmpeg Log: ${data}`);
   });
 
   ffmpeg.on("close", (code) => {
+    activeProcesses.delete(fileKey);
     console.log(`FFmpeg proceso cerrado con código: ${code}`);
     callback(code === 0);
   });
+};
+
+exports.cancelAudioProcess = (fileKey) => {
+  const process = activeProcesses.get(fileKey);
+  if (process) {
+    process.kill("SIGKILL");
+    activeProcesses.delete(fileKey);
+    return true;
+  }
+
+  return false;
 };
