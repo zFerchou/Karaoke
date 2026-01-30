@@ -1,9 +1,49 @@
-import React from 'react';
-import { Upload, Music, Download, Wand2, Loader2 } from 'lucide-react';
+import {
+  Upload,
+  Music,
+  Download,
+  Wand2,
+  Loader2,
+  XCircle,
+  Info,
+} from "lucide-react";
+import { cancelAudioFilterProcess } from "../audioService";
 
 const FilterPanel = ({
-  file, setFile, result, isProcessing, onSubmit, error, selectedOption, setSelectedOption, selectedQuality, setSelectedQuality, filterOptions, qualityOptions, fileInputRef, handleFileChange
+  file,
+  setFile,
+  result,
+  isProcessing,
+  onSubmit,
+  onCancel,
+  error,
+  selectedOption,
+  setSelectedOption,
+  selectedQuality,
+  setSelectedQuality,
+  filterOptions,
+  qualityOptions,
+  fileInputRef,
+  handleFileChange,
 }) => {
+  const handleCancel = async () => {
+    try {
+      const response = await cancelAudioFilterProcess();
+
+      // 1. Apagamos el flag en el padre.
+      // Esto hace que el catch del handleSubmit ignore el error de conexión.
+      if (onCancel) onCancel();
+
+      // 2. Esperamos un pelín para asegurar que el catch del padre ya pasó
+      setTimeout(() => {
+        if (response && response.message) {
+          setError(response.message); // Aquí ya debería salir "Proceso detenido..."
+        }
+      }, 50);
+    } catch (err) {
+      setError("No se pudo cancelar el proceso.");
+    }
+  };
   return (
     <div className="vfs-controls">
       {/* AREA DE UPLOAD */}
@@ -22,7 +62,9 @@ const FilterPanel = ({
           {file ? (
             <>
               <Music size={40} color="#a78bfa" />
-              <span style={{ fontWeight: "500", color: "#ddd", fontSize: "0.9rem" }}>
+              <span
+                style={{ fontWeight: "500", color: "#ddd", fontSize: "0.9rem" }}
+              >
                 {file.name}
               </span>
             </>
@@ -45,10 +87,17 @@ const FilterPanel = ({
             onClick={() => setSelectedOption(opt.id)}
             className={`vfs-filter-btn ${selectedOption === opt.id ? "selected" : ""}`}
           >
-            <div className="filter-dot" style={{ backgroundColor: opt.color }}></div>
+            <div
+              className="filter-dot"
+              style={{ backgroundColor: opt.color }}
+            ></div>
             <div style={{ textAlign: "left" }}>
-              <div style={{ fontWeight: "bold", fontSize: "0.9rem" }}>{opt.label}</div>
-              <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>{opt.desc}</div>
+              <div style={{ fontWeight: "bold", fontSize: "0.9rem" }}>
+                {opt.label}
+              </div>
+              <div style={{ fontSize: "0.75rem", opacity: 0.7 }}>
+                {opt.desc}
+              </div>
             </div>
           </button>
         ))}
@@ -70,7 +119,7 @@ const FilterPanel = ({
         </div>
       </div>
 
-      {/* BOTÓN DE PROCESAR */}
+      {/* BOTÓN DE PROCESAR Y CANCELAR */}
       <button
         onClick={onSubmit}
         disabled={!file || isProcessing}
@@ -79,6 +128,25 @@ const FilterPanel = ({
         {isProcessing ? <Loader2 className="animate-spin" /> : <Wand2 />}
         {isProcessing ? "Procesando..." : "Procesar filtro"}
       </button>
+      {/* MODAL DE PROCESAMIENTO (Igual al de tus compañeros) */}
+      {isProcessing && (
+        <div className="vfs-modal-overlay entry">
+          <div className="vfs-modal-content">
+            <div className="vfs-loader-container">
+              <div className="vfs-loader-spinner"></div>
+              <Loader2 className="loader-icon-center animate-spin" size={32} />
+            </div>
+
+            <h3>Aplicando Filtro de Voz</h3>
+            <p>Esto puede tardar unos segundos dependiendo de la duración...</p>
+
+            <button onClick={handleCancel} className="vfs-cancel-btn">
+              <XCircle size={18} />
+              Cancelar Proceso
+            </button>
+          </div>
+        </div>
+      )}
       {error && <div className="vfs-error">{error}</div>}
 
       {/* ÁREA DE RESULTADOS */}
@@ -90,7 +158,12 @@ const FilterPanel = ({
         ) : (
           <div className="vfs-success">
             <Music size={56} color="#4ade80" />
-            <audio controls src={result.url} className="vfs-audio-player" key={result.url} />
+            <audio
+              controls
+              src={result.url}
+              className="vfs-audio-player"
+              key={result.url}
+            />
             <a href={result.url} download className="vfs-download-btn">
               <Download size={20} /> Descargar Audio
             </a>

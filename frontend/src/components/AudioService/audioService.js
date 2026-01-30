@@ -95,3 +95,15 @@ export const getDownloadUrl = (filename) => {
   // Asumimos que la ruta de descarga es compartida o el backend devuelve la ruta correcta
   return `${BASE_URL}/audio/download/${filename}`;
 };
+
+export const cancelAudioFilterProcess = async () => {
+  try {
+    // Como el back es automático, no necesitamos enviar el fileName en el body
+    // Pero enviamos un objeto vacío para cumplir con el formato JSON
+    const response = await axios.post(`${BASE_URL}/audio/cancel`, {});
+    return response.data;
+  } catch (error) {
+    console.error('Error cancelando el filtro de audio:', error);
+    throw error;
+  }
+};
