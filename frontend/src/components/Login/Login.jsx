@@ -34,7 +34,7 @@ const Login = () => {
   };
 
   return (
-    <GoogleOAuthProvider clientId="TU_CLIENT_ID">
+    <GoogleOAuthProvider clientId="262428448408-i48oqhsei1hth1dgdrh2p6gu9u93fgid.apps.googleusercontent.com">
       <div className="login-container">
         <div className="wave-bg"></div>
         
