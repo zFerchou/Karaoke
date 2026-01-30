@@ -1,14 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { processAudio, separateAudio, transcribeAudio, createLyricVideo } from './audioService';
-import './VoiceFilterStudio.css';
+import Navbar from '../Navbar'; 
 
-// Paneles
+// Importación de Paneles
 import FilterPanel from './panels/FilterPanel';
 import SpleeterPanel from './panels/SpleeterPanel';
 import TranscribePanel from './panels/TranscribePanel';
 import KaraokePanel from './panels/KaraokePanel';
 
-// --- CONSTANTES (Asegúrate que estén aquí) ---
+import './VoiceFilterStudio.css';
+
 const FILTER_OPTIONS = [
   { id: 'clean', label: 'Limpieza (Clean)', desc: 'Elimina ruido de fondo', color: '#3b82f6' },
   { id: 'vivid', label: 'Vívido', desc: 'Realza frecuencias altas', color: '#a855f7' },
@@ -35,17 +36,18 @@ const VoiceFilterStudio = ({ mode }) => {
   const [selectedQuality, setSelectedQuality] = useState(QUALITY_OPTIONS[0]);
   const fileInputRef = useRef(null);
 
-  // IMPORTANTE: Resetear el estado cuando cambias de modo (página)
   useEffect(() => {
     setFile(null);
     setResult(null);
     setError(null);
     
-    // Configurar opción por defecto según el modo
-    if (mode === 'filter') setSelectedOption('clean');
-    if (mode === 'spleeter') setSelectedOption('vocals');
-    if (mode === 'transcribe') setSelectedOption('transcribe');
-    if (mode === 'video') setSelectedOption('karaoke_video');
+    const defaults = {
+      filter: 'clean',
+      spleeter: 'vocals',
+      transcribe: 'transcribe',
+      video: 'karaoke_video'
+    };
+    setSelectedOption(defaults[mode] || '');
   }, [mode]);
 
   const handleSubmit = async () => {
@@ -91,27 +93,31 @@ const VoiceFilterStudio = ({ mode }) => {
   };
 
   return (
-    <div className="vfs-container">
-      <div className="vfs-card">
-        {/* Renderizado condicional estricto */}
-        {mode === 'filter' && (
-          <FilterPanel 
-            {...commonProps} 
-            filterOptions={FILTER_OPTIONS} 
-            qualityOptions={QUALITY_OPTIONS} 
-            selectedQuality={selectedQuality}
-            setSelectedQuality={setSelectedQuality}
-          />
-        )}
-        {mode === 'spleeter' && (
-          <SpleeterPanel 
-            {...commonProps} 
-            spleeterOptions={SPLEETER_OPTIONS} 
-            onCancel={() => setIsProcessing(false)} 
-          />
-        )}
-        {mode === 'transcribe' && <TranscribePanel {...commonProps} />}
-        {mode === 'video' && <KaraokePanel {...commonProps} />}
+    <div className="vfs-main-layout">
+      {/* 1. USAMOS EL COMPONENTE ÚNICO */}
+      <Navbar />
+
+      <div className="vfs-container">
+        <div className="vfs-card">
+          {mode === 'filter' && (
+            <FilterPanel 
+              {...commonProps} 
+              filterOptions={FILTER_OPTIONS} 
+              qualityOptions={QUALITY_OPTIONS} 
+              selectedQuality={selectedQuality}
+              setSelectedQuality={setSelectedQuality}
+            />
+          )}
+          {mode === 'spleeter' && (
+            <SpleeterPanel 
+              {...commonProps} 
+              spleeterOptions={SPLEETER_OPTIONS} 
+              onCancel={() => setIsProcessing(false)} 
+            />
+          )}
+          {mode === 'transcribe' && <TranscribePanel {...commonProps} />}
+          {mode === 'video' && <KaraokePanel {...commonProps} />}
+        </div>
       </div>
     </div>
   );

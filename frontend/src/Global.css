@@ -1,0 +1,112 @@
+/* src/Global.css */
+
+:root {
+  --primary-neon: #7C4DFF;
+  --coral-ia: #FF6A6A;
+  --bg-dark: #0B1020;
+  --bg-glass: rgba(20, 26, 51, 0.7);
+  --border-color: #2A3158;
+  --text-dim: #94A3B8;
+  --font-main: 'Inter', sans-serif;
+}
+
+/* Reseteo básico y fondo global */
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--bg-dark);
+  background: radial-gradient(circle at top left, #141A33, #0B1020 80%);
+  color: white;
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header Estilo Glass */
+.home-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 5%;
+  background: var(--bg-glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* Logo */
+.header-logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-style: italic;
+  user-select: none;
+  cursor: pointer;
+}
+
+.header-logo span {
+  color: var(--primary-neon);
+  text-shadow: 0 0 10px rgba(124, 77, 255, 0.4);
+}
+
+/* Contenedor de botones (Derecha) */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Estilo Base para Botones de Acción en Nav */
+.nav-home-btn, .logout-btn, .login-btn-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-family: var(--font-main);
+  font-size: 0.9rem;
+}
+
+/* Botón Home (Morado) */
+.nav-home-btn {
+  background: rgba(124, 77, 255, 0.1);
+  border: 1px solid var(--primary-neon);
+  color: var(--primary-neon);
+}
+
+.nav-home-btn:hover {
+  background: var(--primary-neon);
+  color: white;
+  box-shadow: 0 0 15px rgba(124, 77, 255, 0.3);
+}
+
+/* Botón Cerrar Sesión (Coral) */
+.logout-btn {
+  background: rgba(255, 106, 106, 0.1);
+  border: 1px solid var(--coral-ia);
+  color: var(--coral-ia);
+}
+
+.logout-btn:hover {
+  background: var(--coral-ia);
+  color: white;
+  box-shadow: 0 0 15px rgba(255, 106, 106, 0.3);
+}
+
+/* Botón Iniciar Sesión */
+.login-btn-nav {
+  background: var(--coral-ia);
+  border: 1px solid var(--coral-ia);
+  color: white;
+  border-radius: 12px;
+}
+
+.login-btn-nav:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 106, 106, 0.4);
+}

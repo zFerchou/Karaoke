@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  LogOut, User, ArrowRight, LogIn, 
-  Cpu, FileText, Video, Wand2 
-} from 'lucide-react';
+import { User, ArrowRight, Cpu, FileText, Video, Wand2 } from 'lucide-react';
+import Navbar from '../Navbar';
 import './Home.css';
 
 const Home = () => {
@@ -41,12 +39,6 @@ const Home = () => {
     verificarSesion();
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('usuario');
-    setUsuario(null);
-  };
-
   const handleServiceClick = (path) => {
     if (!usuario) {
       navigate('/login');
@@ -66,23 +58,8 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      <header className="home-header">
-        <div className="header-logo" onClick={() => navigate('/home')} style={{cursor: 'pointer'}}>
-          Karaoke <span>IA</span>
-        </div>
-        
-        {usuario ? (
-          <button onClick={handleLogout} className="logout-btn">
-            <LogOut size={18} />
-            <span>Cerrar Sesión</span>
-          </button>
-        ) : (
-          <button onClick={() => navigate('/login')} className="login-btn-nav">
-            <LogIn size={18} />
-            <span>Iniciar Sesión</span>
-          </button>
-        )}
-      </header>
+      {/* 1. USAMOS EL COMPONENTE ÚNICO */}
+      <Navbar />
 
       <main className="home-content">
         <section className="welcome-section">
@@ -95,17 +72,15 @@ const Home = () => {
         </section>
 
         <div className="info-grid">
-          {/* SERVICIO 1: SPLEETER */}
           <div className="info-card">
             <div className="card-icon"><Cpu size={24} color="#A78BFA" /></div>
-            <h3>Separador IA (Spleeter)</h3>
+            <h3>Separador IA</h3>
             <p>Divide tus canciones en pistas independientes. Extrae voces, batería y más.</p>
             <button className="card-action" onClick={() => handleServiceClick('/separador')}>
               {usuario ? 'Separar Audio' : 'Ingresa para usar'} <ArrowRight size={16} />
             </button>
           </div>
 
-          {/* SERVICIO 2: TRANSCRIPCIÓN */}
           <div className="info-card">
             <div className="card-icon"><FileText size={24} color="#10B981" /></div>
             <h3>Transcriptor de Letras</h3>
@@ -115,7 +90,6 @@ const Home = () => {
             </button>
           </div>
 
-          {/* SERVICIO 3: KARAOKE */}
           <div className="info-card">
             <div className="card-icon"><Video size={24} color="#F43F5E" /></div>
             <h3>Creador de Karaoke</h3>
@@ -125,7 +99,6 @@ const Home = () => {
             </button>
           </div>
 
-          {/* SERVICIO 4: FILTROS */}
           <div className="info-card">
             <div className="card-icon"><Wand2 size={24} color="#3B82F6" /></div>
             <h3>Filtros de Audio</h3>
@@ -136,7 +109,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Perfil o CTA */}
         {usuario ? (
           <div className="profile-summary-card">
             <div className="profile-avatar"><User size={40} color="#7C4DFF" /></div>
