@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Star, Info, ArrowRight, LogIn } from 'lucide-react';
+import { 
+  LogOut, User, Star, ArrowRight, LogIn, 
+  Cpu, FileText, Video, Wand2 
+} from 'lucide-react';
 import './Home.css';
 
 const Home = () => {
@@ -11,8 +14,6 @@ const Home = () => {
   useEffect(() => {
     const verificarSesion = async () => {
       const token = localStorage.getItem('token');
-      
-      // Si no hay token, no redirigimos, solo dejamos de cargar
       if (!token) {
         setLoading(false);
         return;
@@ -31,7 +32,6 @@ const Home = () => {
           const data = await response.json();
           setUsuario(data.datosUsuario);
         } else {
-          // Si el token es inválido, limpiamos pero nos quedamos en Home
           localStorage.removeItem('token');
         }
       } catch (error) {
@@ -47,7 +47,16 @@ const Home = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
-    setUsuario(null); // Actualizamos el estado local inmediatamente
+    setUsuario(null);
+  };
+
+  // Función para manejar el click en los servicios
+  const handleServiceClick = (path) => {
+    if (!usuario) {
+      navigate('/login');
+    } else {
+      navigate(path);
+    }
   };
 
   if (loading) {
@@ -61,7 +70,6 @@ const Home = () => {
 
   return (
     <div className="home-container">
-      {/* Navbar Dinámica */}
       <header className="home-header">
         <div className="header-logo" onClick={() => navigate('/home')} style={{cursor: 'pointer'}}>
           Karaoke <span>IA</span>
@@ -83,33 +91,55 @@ const Home = () => {
       <main className="home-content">
         <section className="welcome-section">
           {usuario ? (
-            <h1>¡Hola de nuevo, <span>{usuario.nombre}</span>! 👋</h1>
+            <h1>¡Hola de nuevo, <span>{usuario.nombre}</span>!</h1>
           ) : (
             <h1>Bienvenido a <span>Karaoke IA</span></h1>
           )}
-          <p>La plataforma definitiva para transformar tu voz con inteligencia artificial.</p>
+          <p>Potencia tu música con nuestras herramientas de inteligencia artificial de última generación.</p>
         </section>
 
-        {/* Las tarjetas informativas siempre son visibles */}
         <div className="info-grid">
+          {/* SERVICIO 1: SPLEETER */}
           <div className="info-card">
-            <div className="card-icon"><Star size={24} color="#FFD36A" /></div>
-            <h3>Separación de Voces</h3>
-            <p>Sube tus canciones y obtén la pista instrumental y la voz por separado.</p>
-            <button className="card-action" onClick={() => !usuario && navigate('/')}>
-              {usuario ? 'Usar ahora' : 'Ingresa para usar'} <ArrowRight size={16} />
+            <div className="card-icon"><Cpu size={24} color="#A78BFA" /></div>
+            <h3>Separador IA (Spleeter)</h3>
+            <p>Divide tus canciones en pistas independientes. Extrae voces, batería, bajo y piano con precisión profesional.</p>
+            <button className="card-action" onClick={() => handleServiceClick('/studio')}>
+              {usuario ? 'Separar Audio' : 'Ingresa para usar'} <ArrowRight size={16} />
             </button>
           </div>
 
+          {/* SERVICIO 2: TRANSCRIPCIÓN */}
           <div className="info-card">
-            <div className="card-icon"><Star size={24} color="#FFD36A" /></div>
-            <h3>Remix con IA</h3>
-            <p>Cambia el estilo de cualquier canción usando modelos entrenados.</p>
-            <button className="card-action">Próximamente <ArrowRight size={16} /></button>
+            <div className="card-icon"><FileText size={24} color="#10B981" /></div>
+            <h3>Transcriptor de Letras</h3>
+            <p>Convierte el audio de cualquier canción en texto. Ideal para obtener letras rápidamente y sincronizarlas.</p>
+            <button className="card-action" onClick={() => handleServiceClick('/studio')}>
+              {usuario ? 'Transcribir ahora' : 'Ingresa para usar'} <ArrowRight size={16} />
+            </button>
+          </div>
+
+          {/* SERVICIO 3: KARAOKE */}
+          <div className="info-card">
+            <div className="card-icon"><Video size={24} color="#F43F5E" /></div>
+            <h3>Creador de Karaoke</h3>
+            <p>Genera videos MP4 con subtítulos .ASS automáticos. Crea tus propias pistas de karaoke en segundos.</p>
+            <button className="card-action" onClick={() => handleServiceClick('/studio')}>
+              {usuario ? 'Generar Video' : 'Ingresa para usar'} <ArrowRight size={16} />
+            </button>
+          </div>
+
+          {/* SERVICIO 4: FILTROS */}
+          <div className="info-card">
+            <div className="card-icon"><Wand2 size={24} color="#3B82F6" /></div>
+            <h3>Filtros de Audio</h3>
+            <p>Aplica efectos avanzados y mejora la calidad de exportación de tus archivos procesados.</p>
+            <button className="card-action" onClick={() => handleServiceClick('/studio')}>
+              {usuario ? 'Aplicar Filtros' : 'Ingresa para usar'} <ArrowRight size={16} />
+            </button>
           </div>
         </div>
 
-        {/* Sección condicional: Perfil vs Invitación */}
         {usuario ? (
           <div className="profile-summary-card">
             <div className="profile-avatar"><User size={40} color="#7C4DFF" /></div>
@@ -121,10 +151,10 @@ const Home = () => {
           </div>
         ) : (
           <div className="cta-register-card">
-            <h3>¿Listo para empezar?</h3>
-            <p>Crea una cuenta gratuita para empezar a procesar tus canciones.</p>
+            <h3>Empieza a crear hoy mismo</h3>
+            <p>Únete a nuestra comunidad y obtén acceso a todas las herramientas de procesamiento de voz.</p>
             <button className="login-redirect-btn" onClick={() => navigate('/registrar')}>
-              Comenzar ahora
+              Crear cuenta gratuita
             </button>
           </div>
         )}

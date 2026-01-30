@@ -190,3 +190,26 @@ html, body {
   font-size: 0.85rem;
   margin-bottom: 10px;
 }
+
+.btn-back-home {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border-ui);
+  padding: 10px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+}
+
+.btn-back-home:hover {
+  background: rgba(148, 163, 184, 0.1);
+  color: white;
+  border-color: var(--text-dim);
+}

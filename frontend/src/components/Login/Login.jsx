@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
-import { Mail, Lock } from 'lucide-react'; // Iconos similares a la imagen
+import { Mail, Lock, ArrowLeft } from 'lucide-react'; 
 import './Login.css';
 
 const Login = () => {
@@ -23,7 +23,7 @@ const Login = () => {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
-        navigate('/home'); 
+        navigate('/'); 
       } else {
         setError(data.message || "Error al iniciar sesión");
       }
@@ -35,7 +35,6 @@ const Login = () => {
   return (
     <GoogleOAuthProvider clientId="TU_CLIENT_ID">
       <div className="login-container">
-        {/* Fondo con ondas visuales (decorativo) */}
         <div className="wave-bg"></div>
         
         <div className="login-card">
@@ -93,6 +92,16 @@ const Login = () => {
               ¿Nuevo en Karaoke IA? <br />
               <span onClick={() => navigate('/registrar')}>¡Regístrate!</span>
             </p>
+
+            {/* BOTÓN PARA VOLVER AL HOME */}
+            <button 
+              type="button" 
+              className="btn-back-home" 
+              onClick={() => navigate('/')}
+            >
+              <ArrowLeft size={16} />
+              Volver al inicio
+            </button>
           </form>
         </div>
       </div>
