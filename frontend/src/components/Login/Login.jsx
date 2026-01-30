@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google'; // <--- Importar Google
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { Mail, Lock, ArrowLeft } from 'lucide-react'; 
 import './Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
-  
   const [correo, setCorreo] = useState('');
   const [contrasena, setContrasena] = useState('');
   const [error, setError] = useState(null);
@@ -13,117 +13,96 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(null);
-
     try {
       const response = await fetch('http://localhost:3000/usuarios/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ correo, contrasena }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
-        console.log("Login correcto:", data);
         localStorage.setItem('token', data.token);
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
+        // Aquí elegí tu versión: ir al Studio
         navigate('/studio'); 
       } else {
         setError(data.message || "Error al iniciar sesión");
       }
     } catch (err) {
-      console.error("Error de conexión:", err);
-      setError("No se pudo conectar con el servidor.");
-    }
-  };
-
-  // --- FUNCIÓN PARA LOGIN CON GOOGLE ---
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      const res = await fetch('http://localhost:3000/usuarios/google-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: credentialResponse.credential }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        console.log("Google Login correcto:", data);
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('usuario', JSON.stringify(data.usuario));
-        navigate('/home');
-      } else {
-        setError("Error al iniciar sesión con Google");
-      }
-    } catch (error) {
-      console.error("Error Google:", error);
       setError("No se pudo conectar con el servidor.");
     }
   };
 
   return (
-    // REEMPLAZA CON TU CLIENT ID REAL DE GOOGLE CLOUD
-    <GoogleOAuthProvider clientId="262428448408-i48oqhsei1hth1dgdrh2p6gu9u93fgid.apps.googleusercontent.com">
+    <GoogleOAuthProvider clientId="TU_CLIENT_ID">
       <div className="login-container">
+        <div className="wave-bg"></div>
+        
         <div className="login-card">
-          <h2 className="login-title">🎤 Karaoke Bar</h2>
+          <div className="login-header">
+             <h1 className="brand-title">Karaoke <span>IA</span></h1>
+             <p className="brand-subtitle">Tu voz, potenciada con IA.</p>
+          </div>
           
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <label htmlFor="correo">Correo Electrónico</label>
+          <form onSubmit={handleLogin} className="login-form">
+            <div className="input-group">
+              <Mail className="input-icon" size={20} />
               <input
                 type="email"
-                id="correo"
-                className="form-input"
-                placeholder="ejemplo@correo.com"
+                placeholder="Correo Electrónico"
                 value={correo}
                 onChange={(e) => setCorreo(e.target.value)}
                 required
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="password">Contraseña</label>
+            <div className="input-group">
+              <Lock className="input-icon" size={20} />
               <input
                 type="password"
-                id="password"
-                className="form-input"
-                placeholder="••••••••"
+                placeholder="Contraseña"
                 value={contrasena}
                 onChange={(e) => setContrasena(e.target.value)}
                 required
               />
             </div>
 
-            {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-            <button type="submit" className="login-button">
+            <button type="submit" className="login-submit-btn">
               Iniciar Sesión
             </button>
 
-            {/* --- BOTÓN DE GOOGLE --- */}
-            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
-                <GoogleLogin
-                    onSuccess={handleGoogleSuccess}
-                    onError={() => setError("Falló el inicio de sesión con Google")}
-                    theme="filled_blue"
-                    shape="pill"
-                    text="signin_with"
-                />
+            <a href="#!" className="forgot-password">¿Olvidaste tu contraseña?</a>
+
+            <div className="separator">
+                <span>O continúa con</span>
             </div>
 
-            <div style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '15px' }}>
-              <p style={{ marginBottom: '10px', color: '#666' }}>¿No tienes cuenta?</p>
-              <button 
-                type="button" 
-                className="register-button"
-                onClick={() => navigate('/registrar')} 
-              >
-                Registrarse Manualmente
-              </button>
+            <div className="social-login">
+              <GoogleLogin
+                onSuccess={(res) => console.log(res)}
+                onError={() => setError("Error con Google")}
+                theme="filled_blue"
+                shape="rect"
+                width="100%"
+              />
             </div>
 
+            <p className="register-text">
+              ¿Nuevo en Karaoke IA? <br />
+              <span onClick={() => navigate('/registrar')}>¡Regístrate!</span>
+            </p>
+
+            {/* BOTÓN PARA VOLVER AL HOME */}
+            <button 
+              type="button" 
+              className="btn-back-home" 
+              onClick={() => navigate('/')}
+            >
+              <ArrowLeft size={16} />
+              Volver al inicio
+            </button>
           </form>
         </div>
       </div>

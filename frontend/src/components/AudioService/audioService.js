@@ -42,6 +42,24 @@ export const separateAudio = async (file, separationType) => {
   }
 };
 
+// --- NUEVA FUNCIÓN: GENERADOR DE VIDEO KARAOKE ---
+export const createLyricVideo = async (file, language = 'es', model = 'small') => {
+  const formData = new FormData();
+  formData.append('audio', file);
+  formData.append('language', language);
+  formData.append('model', model);
+
+  try {
+    const response = await axios.post(`${BASE_URL}/video/lyric-maker`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data; // Retorna { status: "Success", files: { video: "...", subtitles... } }
+  } catch (error) {
+    console.error("Error en Lyric Maker:", error);
+    throw error;
+  }
+};
+
 // audioService.js
 export const transcribeAudio = async (file) => {
   const formData = new FormData();
@@ -59,6 +77,17 @@ export const transcribeAudio = async (file) => {
     throw error;
   }
 };
+
+// --- CANCELACIÓN DE SPLEETER ---
+export const cancelSpleeterProcess = async (filename) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/spleeter/cancel`, { fileName: filename });
+    return response.data;
+  } catch (error) {
+    console.error('Error cancelando proceso Spleeter:', error);
+    throw error;
+  }
+}
 
 // Función genérica para obtener URL de descarga
 // NOTA: Ajusta esto según si tu backend devuelve rutas diferentes para spleeter

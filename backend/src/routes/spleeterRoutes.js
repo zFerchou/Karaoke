@@ -40,4 +40,7 @@ const upload = multer({ storage });
  */
 router.post("/separate", upload.single("audio"), spleeterController.separateAudio);
 
+// Endpoint para cancelar proceso Spleeter por nombre de archivo
+router.post("/cancel", spleeterController.cancelSpleeter);
+
 module.exports = router;
