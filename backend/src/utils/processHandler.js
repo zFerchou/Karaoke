@@ -14,7 +14,8 @@ const limpiarProcesosAnteriores = () => {
 };
 
 exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
-  limpiarProcesosAnteriores();
+  // Solo limpiar procesos si ocurre un error, no antes de cada tarea
+  // limpiarProcesosAnteriores();
 
   const isWin = process.platform === "win32";
   const venvPath = path.resolve(__dirname, "../../venv", isWin ? "Scripts" : "bin");
@@ -26,10 +27,10 @@ exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
     // --- ESTABILIZADORES Y ACELERADORES ---
     CUDA_VISIBLE_DEVICES: "-1", // Obliga a usar CPU (la GPU mal configurada crashea VS Code)
     TF_CPP_MIN_LOG_LEVEL: "3",
-    OMP_NUM_THREADS: "1", // Limita a UN solo hilo. Es más lento, pero no satura la RAM
-    MKL_NUM_THREADS: "1", // Evita que las librerías matemáticas disparen el consumo
-    TF_NUM_INTRAOP_THREADS: "1",
-    TF_NUM_INTEROP_THREADS: "1",
+    OMP_NUM_THREADS: "5", // 8 núcleos: 4 hilos para buen balance calidad/velocidad/RAM
+    MKL_NUM_THREADS: "2", // Permite más paralelismo matemático
+    TF_NUM_INTRAOP_THREADS: "2",
+    TF_NUM_INTEROP_THREADS: "2",
     PYTHONMALLOC: "malloc",
   };
 
@@ -43,7 +44,7 @@ exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
   ];
 
   if (format === "mp3") {
-    args.splice(args.length - 1, 0, "-b", "320k");
+    args.splice(args.length - 1, 0, "-b", "320k"); // Bitrate máximo para MP3
   }
 
   const child = spawn(pythonExe, args, { env, shell: false });
@@ -61,3 +62,5 @@ exports.spawnSpleeter = (inputPath, outputDir, format, callback) => {
     callback(code !== 0 ? true : null, errorLog);
   });
 };
+
+
