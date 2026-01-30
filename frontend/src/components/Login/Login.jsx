@@ -27,7 +27,7 @@ const Login = () => {
         console.log("Login correcto:", data);
         localStorage.setItem('token', data.token);
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
-        navigate('/home'); 
+        navigate('/studio'); 
       } else {
         setError(data.message || "Error al iniciar sesión");
       }
