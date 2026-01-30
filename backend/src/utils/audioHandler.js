@@ -53,7 +53,7 @@ exports.applyAudioFilter = (
 ) => {
   const filterMap = {
     clean:
-      "afftdn=nr=18:nf=-20, highpass=f=100, lowpass=f=15000, agate=threshold=-28dB:ratio=2.5, treble=g=4:f=6000",
+      "afftdn=nr=12:nf=-25, highpass=f=80, lowpass=f=18000, agate=threshold=-30dB:ratio=2, treble=g=5:f=5000, volume=1.5",
     vivid:
       "anequalizer=c0 f=100 w=100 g=-5|c0 f=5000 w=500 g=8, compand=attacks=0:points=-80/-80|-25/-10|-15/-6|0/-2, aexciter=level_in=1:level_out=0.8:amount=2, volume=1.3",
     radio:
