@@ -1,86 +1,192 @@
-/* frontend/src/components/Login.css */
+/* RESET GLOBAL: Elimina bordes blancos accidentales */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    background-color: #0B1020; /* Color base para evitar destellos blancos */
+}
+
+/* Importar fuente moderna */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+:root {
+  --bg-deep: #0B1020;
+  --bg-purple: #141A33;
+  --card-bg: rgba(30, 37, 69, 0.6); 
+  --border-ui: #2A3158;
+  --primary-neon: #7C4DFF;
+  --coral-ia: #FF6A6A;
+  --text-main: #FFFFFF;
+  --text-dim: #94A3B8;
+}
 
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh; /* Ocupa toda la altura de la pantalla */
+  width: 100%;
+  min-height: 100vh; /* Asegura que cubra toda la altura de la pantalla */
+  background-color: var(--bg-deep);
+  /* Graduación de fondo similar a la imagen */
+  background: radial-gradient(circle at top right, #1e1b4b, #0b1020 70%);
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Efecto de ondas en la parte inferior */
+.wave-bg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 150px;
+  background: url('https://raw.githubusercontent.com/pajasevi/CSS-Animations/master/waves.png');
+  opacity: 0.1;
+  filter: hue-rotate(220deg);
+  pointer-events: none;
 }
 
 .login-card {
-  background-color: white;
+  background: var(--card-bg);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
   padding: 2.5rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px; /* Ancho máximo de la tarjeta */
+  border-radius: 24px;
+  border: 1px solid var(--border-ui);
+  width: 90%;
+  max-width: 380px;
   text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  z-index: 10;
 }
 
-.login-title {
-  margin-bottom: 1.5rem;
-  color: #333;
-  font-size: 24px;
-  font-weight: bold;
+/* Cabecera del Login */
+.login-header {
+  margin-bottom: 2rem;
 }
 
-.form-group {
-  margin-bottom: 1rem;
-  text-align: left;
-}
-
-.form-group label {
-  display: block;
+.brand-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--text-main);
   margin-bottom: 0.5rem;
-  color: #666;
-  font-size: 0.9rem;
+  font-style: italic;
+  letter-spacing: -1px;
 }
 
-.form-input {
+.brand-title span {
+  color: #c084fc;
+  text-shadow: 0 0 15px rgba(124, 77, 255, 0.6);
+}
+
+.brand-subtitle {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+}
+
+/* Inputs */
+.input-group {
+  position: relative;
+  margin-bottom: 1.2rem;
+}
+
+.input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-dim);
+  opacity: 0.7;
+}
+
+.input-group input {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  padding: 14px 14px 14px 45px;
+  background: rgba(20, 26, 51, 0.8);
+  border: 1px solid var(--border-ui);
+  border-radius: 12px;
+  color: white;
   font-size: 1rem;
-  box-sizing: border-box; /* Para que el padding no rompa el ancho */
+  transition: all 0.3s ease;
+  box-sizing: border-box;
 }
 
-.form-input:focus {
-  border-color: #007bff;
+.input-group input:focus {
   outline: none;
+  border-color: var(--primary-neon);
+  box-shadow: 0 0 10px rgba(124, 77, 255, 0.2);
 }
 
-.login-button {
+/* Botón Iniciar Sesión */
+.login-submit-btn {
   width: 100%;
-  padding: 12px;
-  background-color: #007bff;
+  padding: 14px;
+  background: linear-gradient(135deg, #FF6A6A 0%, #ee5253 100%);
   color: white;
   border: none;
-  border-radius: 5px;
-  font-size: 1rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 0.5rem;
+}
+
+.login-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 106, 106, 0.4);
+}
+
+/* Enlaces y Separadores */
+.forgot-password {
+  display: block;
   margin-top: 1rem;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.85rem;
 }
 
-.login-button:hover {
-  background-color: #0056b3;
+.separator {
+  margin: 1.5rem 0;
+  border-bottom: 1px solid var(--border-ui);
+  line-height: 0.1em;
 }
 
-/* Agrega esto al final de Login.css */
+.separator span {
+  background: #1e2545; /* Ajustado al fondo de la card para que no se note el corte */
+  padding: 0 10px;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
 
-.register-button {
-  width: 100%;
-  padding: 12px;
-  background-color: #28a745; /* Verde para diferenciarlo */
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 1rem;
+.social-login {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Texto de registro inferior */
+.register-text {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.register-text span {
+  color: var(--coral-ia);
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
-.register-button:hover {
-  background-color: #218838;
+.error-text {
+  color: #ff4d4d;
+  font-size: 0.85rem;
+  margin-bottom: 10px;
 }
