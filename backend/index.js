@@ -12,7 +12,7 @@ const swaggerSpec = require("./swagger");
 const spleeterRoutes = require("./src/routes/spleeterRoutes");
 const audioRoutes = require("./src/routes/audioRoutes");
 const transcribeRoutes = require('./src/routes/transcribeRoutes');
-const usuariosRouter = require("./src/routes/usuarios");
+const usuariosRouter = require("./src/routes/usuarioRoutes");
 const lyricVideoRoutes = require("./src/routes/lyricVideoRoutes");
 // Utilidades
 const { startCleanupTask } = require("./src/utils/cleanUpTask");
