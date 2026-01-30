@@ -24,7 +24,7 @@ const Login = () => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
         // Aquí elegí tu versión: ir al Studio
-        navigate('/studio'); 
+        navigate('/home'); 
       } else {
         setError(data.message || "Error al iniciar sesión");
       }
