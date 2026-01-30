@@ -123,6 +123,8 @@ const VoiceFilterStudio = ({ mode }) => {
         });
       }
     } catch (err) {
+      console.error("Error capturado en el procesamiento:", err);
+
       setIsProcessing((prevIsProcessing) => {
         // Si prevIsProcessing es false, es porque handleCancel ya lo apagó.
         // Solo ponemos el error si realmente fue un fallo del servidor (prevIsProcessing === true)
