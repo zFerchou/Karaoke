@@ -1,104 +1,22 @@
-const express = require("express");
-const router = express.Router();
-const userController = require("../controllers/userController");
-const { verificarToken } = require("../utils/authMiddleware");
+const jwt = require("jsonwebtoken");
 
-/**
- * @swagger
- * tags:
- * name: Usuarios
- * description: Endpoints para gestión de usuarios
- */
+// Middleware para verificar el token JWT
+const verificarToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
 
-/**
- * @swagger
- * /usuarios:
- * get:
- * summary: Obtener todos los usuarios
- * tags: [Usuarios]
- * responses:
- * 200:
- * description: Lista de usuarios
- */
-router.get("/", userController.obtenerUsuarios);
+  if (!token) {
+    return res.status(401).json({ message: "Acceso denegado. No se proporcionó token." });
+  }
 
-/**
- * @swagger
- * /usuarios/perfil:
- * get:
- * summary: Obtener perfil del usuario autenticado
- * tags: [Usuarios]
- * security:
- * - bearerAuth: []
- * responses:
- * 200:
- * description: Datos del perfil
- */
-router.get("/perfil", verificarToken, userController.obtenerPerfil);
+  jwt.verify(token, process.env.JWT_SECRET || 'secreto_super_seguro', (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: "Token inválido o expirado." });
+    }
+    req.usuario = user;
+    console.log("🔓 Datos del Token verificados:", user);
+    next();
+  });
+};
 
-/**
- * @swagger
- * /usuarios:
- * post:
- * summary: Crear un usuario
- * tags: [Usuarios]
- * requestBody:
- * required: true
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * nombre: { type: string }
- * apellidos: { type: string }
- * correo: { type: string }
- * contrasena: { type: string }
- * rol: { type: string }
- * responses:
- * 200:
- * description: Usuario creado exitosamente
- */
-router.post("/", userController.crearUsuario);
-
-/**
- * @swagger
- * /usuarios/login:
- * post:
- * summary: Login de usuario
- * tags: [Usuarios]
- * requestBody:
- * required: true
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * correo: { type: string }
- * contrasena: { type: string }
- * responses:
- * 200:
- * description: Login exitoso
- */
-router.post("/login", userController.loginUsuario);
-
-/**
- * @swagger
- * /usuarios/google-login:
- * post:
- * summary: Login con Google
- * tags: [Usuarios]
- * requestBody:
- * required: true
- * content:
- * application/json:
- * schema:
- * type: object
- * properties:
- * token: { type: string }
- * responses:
- * 200:
- * description: Login Google exitoso
- */
-router.post("/google-login", userController.googleLogin);
-
-module.exports = router;
+module.exports = { verificarToken };
